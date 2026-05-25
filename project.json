@@ -1,0 +1,458 @@
+{
+  "project": {
+    "name": "Campus Management System (CMS)",
+    "version": "1.0.0",
+    "description": "Multi-tenant school/academy management: students, teachers, fees, attendance, exams, timetable, AI tools, parent/student portals.",
+    "repository": "cms",
+    "lastUpdated": "2026-05-24"
+  },
+  "stack": {
+    "frontend": {
+      "path": "frontend",
+      "framework": "React + Vite",
+      "port": 5173,
+      "styling": "Tailwind CSS",
+      "routing": "React Router v6",
+      "httpClient": "Axios (Bearer JWT)"
+    },
+    "backend": {
+      "path": "backend",
+      "framework": "Node.js + Express 5",
+      "port": 5001,
+      "database": "MySQL",
+      "auth": "JWT (jsonwebtoken + bcryptjs)",
+      "apiPrefix": "/api"
+    }
+  },
+  "environment": {
+    "backendEnvFile": "backend/.env",
+    "variables": {
+      "PORT": "5001",
+      "DB_HOST": "localhost",
+      "DB_USER": "root",
+      "DB_PASSWORD": "",
+      "DB_NAME": "cms_phase1",
+      "JWT_SECRET": "change-in-production",
+      "JWT_EXPIRES_IN": "8h",
+      "FRONTEND_URL": "http://localhost:5173",
+      "OPENAI_API_KEY": "optional",
+      "AI_PROVIDER": "openrouter | openai | anthropic | local"
+    }
+  },
+  "commands": {
+    "backend": {
+      "install": "cd backend && npm install",
+      "dev": "cd backend && npm run dev",
+      "migrate": "cd backend && npm run migrate",
+      "seedBase": "cd backend && npm run seed",
+      "seedDemo": "cd backend && npm run seed:demo",
+      "seedAcademicDemo": "cd backend && node scripts/seed-peers-academic-demo.js"
+    },
+    "frontend": {
+      "install": "cd frontend && npm install",
+      "dev": "cd frontend && npm run dev",
+      "build": "cd frontend && npm run build"
+    },
+    "firstTimeSetup": [
+      "cd backend && npm install && npm run migrate && npm run seed && npm run seed:demo",
+      "cd frontend && npm install && npm run dev",
+      "Login as principal@peers.local / password123"
+    ]
+  },
+  "institutions": [
+    {
+      "id": 1,
+      "name": "Schools",
+      "type": "school",
+      "shift": "morning",
+      "demoPrimary": true
+    },
+    {
+      "id": 2,
+      "name": "Primal Academy",
+      "type": "academy",
+      "shift": "evening"
+    }
+  ],
+  "roles": {
+    "owner": {
+      "description": "Super admin — all institutions",
+      "dashboardRoute": "/owner/dashboard",
+      "defaultPassword": "owner123"
+    },
+    "principal": {
+      "description": "School head — full school management for one institution",
+      "dashboardRoute": "/principal/dashboard",
+      "defaultPassword": "password123",
+      "primarySetupRole": true
+    },
+    "admin": {
+      "description": "Same as principal (school admin)",
+      "dashboardRoute": "/admin/dashboard",
+      "defaultPassword": "password123"
+    },
+    "teacher": {
+      "description": "Marks attendance, assignments, exams for assigned classes only",
+      "dashboardRoute": "/teacher/dashboard",
+      "defaultPassword": "password123",
+      "requiresTeacherAssignments": true
+    },
+    "student": {
+      "description": "Portal: timetable, fees, exams, assignments, report card",
+      "dashboardRoute": "/student/dashboard",
+      "defaultPassword": "password123",
+      "requiresLinkedUserAccount": true
+    },
+    "parent": {
+      "description": "Views linked children data",
+      "dashboardRoute": "/parent/dashboard",
+      "defaultPassword": "password123"
+    },
+    "finance_manager": {
+      "description": "Fees, challans, payments, defaulters",
+      "dashboardRoute": "/finance/dashboard",
+      "defaultPassword": "password123"
+    }
+  },
+  "demoCredentials": {
+    "passwordNote": "All demo accounts use password123 except owner",
+    "accounts": [
+      { "role": "owner", "email": "owner@cms.local", "password": "owner123", "institution": null },
+      { "role": "principal", "email": "principal@peers.local", "password": "password123", "institution": "Schools" },
+      { "role": "admin", "email": "admin@peers.local", "password": "password123", "institution": "Schools" },
+      { "role": "finance_manager", "email": "finance@peers.local", "password": "password123", "institution": "Schools" },
+      { "role": "teacher", "email": "teacher@peers.local", "password": "password123", "institution": "Schools", "note": "Grade 1-A assignments in demo seed" },
+      { "role": "teacher", "email": "sara.teacher@peers.local", "password": "password123", "institution": "Schools" },
+      { "role": "teacher", "email": "ahmed.teacher@peers.local", "password": "password123", "institution": "Schools" },
+      { "role": "teacher", "email": "fatima.teacher@peers.local", "password": "password123", "institution": "Schools" },
+      { "role": "student", "email": "student@peers.local", "password": "password123", "institution": "Schools", "class": "Grade 1", "section": "A" },
+      { "role": "student", "email": "fatima.shah@peers.local", "password": "password123", "institution": "Schools", "class": "Grade 1" },
+      { "role": "parent", "email": "parent@peers.local", "password": "password123", "institution": "Schools", "child": "student@peers.local" },
+      { "role": "parent", "email": "parent.shah@peers.local", "password": "password123", "institution": "Schools" }
+    ]
+  },
+  "academicSetupWorkflow": {
+    "performedBy": ["principal", "admin", "owner"],
+    "guidePage": "/principal/academic-setup",
+    "order": [
+      {
+        "step": 1,
+        "action": "Create classes",
+        "menu": "Classes",
+        "path": "/principal/classes",
+        "example": "Grade 1, Grade 2, Grade 3"
+      },
+      {
+        "step": 2,
+        "action": "Create sections per class",
+        "menu": "Sections",
+        "path": "/principal/sections",
+        "example": "Grade 1 → Section A, B"
+      },
+      {
+        "step": 3,
+        "action": "Create master subjects",
+        "menu": "Subjects",
+        "path": "/principal/subjects",
+        "example": "English, Urdu, Mathematics, Science, Islamiat"
+      },
+      {
+        "step": 4,
+        "action": "Map subjects to each class",
+        "menu": "Class Subjects",
+        "path": "/principal/class-subjects",
+        "table": "class_subjects",
+        "note": "Defines which subjects are taught IN a class (not who teaches)"
+      },
+      {
+        "step": 5,
+        "action": "Add teachers (creates login user)",
+        "menu": "Teachers",
+        "path": "/principal/teachers",
+        "fields": ["name", "email", "password", "employee_no", "qualification"]
+      },
+      {
+        "step": 6,
+        "action": "Assign teacher to class + section + subject",
+        "menu": "Teachers → Assign Subjects button",
+        "path": "/principal/teachers",
+        "table": "teacher_assignments",
+        "fields": ["class_id", "section_id", "subject_id", "role_type"],
+        "note": "REQUIRED for teacher attendance — without this teacher sees 'No class assigned'"
+      },
+      {
+        "step": 7,
+        "action": "Register students in a class",
+        "menu": "Students → Add Student",
+        "path": "/principal/students",
+        "fields": ["first_name", "class_id", "section_id", "email", "password"],
+        "note": "class_id + section_id puts student IN that class"
+      },
+      {
+        "step": 8,
+        "action": "Link parents to students (optional)",
+        "menu": "Parents",
+        "path": "/principal/parents",
+        "table": "parent_student_links"
+      }
+    ],
+    "concepts": {
+      "classSubjects": "Which subjects are taught in a class (curriculum mapping)",
+      "teacherAssignments": "Which teacher teaches which class/section/subject",
+      "studentClassEnrollment": "student.class_id + student.section_id on students table"
+    }
+  },
+  "teacherAttendance": {
+    "path": "/teacher/attendance/mark",
+    "apiMyClasses": "GET /api/attendance/my-classes",
+    "apiMarkSheet": "GET /api/attendance/mark-sheet?class_id=&section_id=&date=",
+    "apiSave": "POST /api/attendance/mark",
+    "statusValues": ["present", "absent", "late", "leave"],
+    "requirements": [
+      "Teacher must have rows in teacher_assignments",
+      "Students must exist in selected class_id + section_id with status active",
+      "Principal assigns via Teachers → Assign Subjects"
+    ],
+    "troubleshooting": {
+      "noClassAssigned": {
+        "symptom": "Class dropdown shows 'No class assigned'",
+        "causes": [
+          "teacher_assignments table has no rows for this teacher user",
+          "Logged in with wrong teacher email",
+          "Demo seed not run (npm run seed:demo)"
+        ],
+        "fix": [
+          "Principal → Teachers → Assign Subjects → pick Class, Section, Subject → Assign",
+          "Or run: cd backend && npm run seed:demo",
+          "Logout and login as teacher@peers.local"
+        ]
+      }
+    }
+  },
+  "studentRegistration": {
+    "path": "/principal/students",
+    "apiCreate": "POST /api/students",
+    "autoGenerated": ["admission_no", "roll_no", "student_code", "login user if email provided"],
+    "requiredForClass": ["class_id", "section_id"],
+    "login": {
+      "autoCreatesUser": true,
+      "defaultPasswordIfEmpty": "password123",
+      "autoEmailIfEmpty": "generated from admission number @school.students.local"
+    }
+  },
+  "database": {
+    "name": "cms_phase1",
+    "migrationsPath": "backend/src/database/migrations",
+    "coreTables": [
+      "institutions",
+      "users",
+      "students",
+      "parents",
+      "parent_student_links",
+      "teachers",
+      "teacher_assignments",
+      "classes",
+      "sections",
+      "subjects",
+      "class_subjects",
+      "attendance",
+      "fee_structures",
+      "challans",
+      "payments",
+      "announcements",
+      "timetable_periods",
+      "timetable_entries",
+      "exam_types",
+      "exams",
+      "exam_schedules",
+      "exam_results",
+      "report_cards",
+      "assignments",
+      "assignment_submissions",
+      "messages",
+      "sms_templates",
+      "sms_logs",
+      "audit_logs"
+    ],
+    "keyRelationships": {
+      "students.user_id": "users.id (student login)",
+      "students.class_id": "classes.id",
+      "students.section_id": "sections.id",
+      "teacher_assignments": "teacher_id + class_id + section_id + subject_id",
+      "class_subjects": "class_id + subject_id",
+      "attendance": "student_id + attendance_date (unique per student per day)"
+    }
+  },
+  "apiEndpoints": {
+    "auth": {
+      "login": "POST /api/auth/login",
+      "me": "GET /api/auth/me",
+      "changePassword": "POST /api/auth/change-password"
+    },
+    "students": {
+      "list": "GET /api/students",
+      "get": "GET /api/students/:id",
+      "me": "GET /api/students/me",
+      "mySubjects": "GET /api/students/me/subjects",
+      "create": "POST /api/students",
+      "update": "PUT /api/students/:id"
+    },
+    "teachers": {
+      "list": "GET /api/teachers",
+      "get": "GET /api/teachers/:id",
+      "me": "GET /api/teachers/me",
+      "create": "POST /api/teachers",
+      "assign": "POST /api/teachers/assign",
+      "removeAssignment": "DELETE /api/teachers/assign/:assignmentId"
+    },
+    "academic": {
+      "classes": "GET|POST|PUT /api/classes",
+      "sections": "GET|POST|PUT /api/sections",
+      "subjects": "GET|POST|PUT /api/subjects",
+      "classSubjects": "GET|POST /api/class-subjects, DELETE /api/class-subjects/:id"
+    },
+    "attendance": {
+      "list": "GET /api/attendance",
+      "mark": "POST /api/attendance/mark",
+      "markSheet": "GET /api/attendance/mark-sheet",
+      "myClasses": "GET /api/attendance/my-classes",
+      "calendar": "GET /api/attendance/calendar/student/:id",
+      "reports": "GET /api/attendance/reports/*"
+    },
+    "finance": {
+      "challans": "GET|POST /api/challans, /api/finance/challans/*",
+      "payments": "GET|POST /api/payments",
+      "feeStructures": "GET|POST /api/finance/fee-structures"
+    },
+    "parents": {
+      "list": "GET /api/parents",
+      "create": "POST /api/parents",
+      "link": "POST /api/parents/link",
+      "children": "GET /api/parents/children"
+    },
+    "timetable": {
+      "periods": "GET|POST|PUT|DELETE /api/timetable/periods",
+      "entries": "GET|POST|PUT|DELETE /api/timetable/entries",
+      "studentMe": "GET /api/timetable/student/me",
+      "teacherMe": "GET /api/timetable/teacher/me",
+      "publish": "POST /api/timetable/publish"
+    },
+    "exams": {
+      "types": "GET|POST /api/exams/types",
+      "exams": "GET|POST /api/exams",
+      "schedules": "GET|POST /api/exams/:examId/schedule",
+      "results": "GET|POST /api/exams/results",
+      "studentMe": "GET /api/exams/student/me"
+    },
+    "assignments": {
+      "list": "GET /api/assignments",
+      "studentMe": "GET /api/assignments/student/me",
+      "create": "POST /api/assignments",
+      "submit": "POST /api/assignments/:id/submit"
+    },
+    "dashboard": {
+      "principal": "GET /api/dashboard/principal",
+      "student": "GET /api/dashboard/student",
+      "parent": "GET /api/dashboard/parent",
+      "finance": "GET /api/dashboard/finance"
+    },
+    "ai": {
+      "settings": "GET|PUT /api/ai/settings",
+      "syllabus": "GET|POST /api/syllabus",
+      "questions": "GET|POST /api/questions",
+      "examPapers": "GET|POST /api/exam-papers"
+    }
+  },
+  "frontendRoutes": {
+    "principal": {
+      "academicSetup": "/principal/academic-setup",
+      "students": "/principal/students",
+      "studentProfile": "/principal/students/:id",
+      "teachers": "/principal/teachers",
+      "parents": "/principal/parents",
+      "classes": "/principal/classes",
+      "sections": "/principal/sections",
+      "subjects": "/principal/subjects",
+      "classSubjects": "/principal/class-subjects",
+      "attendanceMark": "/principal/attendance/mark",
+      "timetable": "/principal/timetable/setup",
+      "exams": "/principal/exams/setup",
+      "finance": "/finance/dashboard"
+    },
+    "teacher": {
+      "profile": "/teacher/profile",
+      "attendance": "/teacher/attendance",
+      "attendanceMark": "/teacher/attendance/mark",
+      "timetable": "/teacher/timetable",
+      "assignments": "/teacher/assignments"
+    },
+    "student": {
+      "dashboard": "/student/dashboard",
+      "profile": "/student/profile",
+      "timetable": "/student/timetable",
+      "fees": "/student/payment-history",
+      "assignments": "/student/assignments"
+    },
+    "parent": {
+      "dashboard": "/parent/dashboard",
+      "children": "/parent/children"
+    }
+  },
+  "demoDataSummary": {
+    "schools": {
+      "classes": ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"],
+      "sectionsPerClass": ["A"],
+      "subjects": ["English", "Urdu", "Mathematics", "Science", "Islamiat", "Computer"],
+      "teachersCount": 4,
+      "studentsCount": 10,
+      "parentsCount": 3,
+      "includes": [
+        "class_subjects mappings",
+        "teacher_assignments",
+        "published timetable Grade 1-A",
+        "20 days attendance",
+        "challans paid/pending/overdue per student",
+        "mid term exam + results + report cards Grade 1",
+        "3 published assignments",
+        "4 announcements",
+        "3 SMS templates"
+      ]
+    }
+  },
+  "demoStudents": [
+    { "name": "Ali Khan", "email": "student@peers.local", "admission": "ADM-2026-0001", "class": "Grade 1", "section": "A" },
+    { "name": "Fatima Shah", "email": "fatima.shah@peers.local", "admission": "ADM-2026-0002", "class": "Grade 1", "section": "A" },
+    { "name": "Hassan Malik", "email": "hassan.malik@peers.local", "admission": "ADM-2026-0003", "class": "Grade 1", "section": "A" },
+    { "name": "Ayesha Raza", "email": "ayesha.raza@peers.local", "admission": "ADM-2026-0004", "class": "Grade 2", "section": "A" },
+    { "name": "Ahmed Butt", "email": "ahmed.butt@peers.local", "admission": "ADM-2026-0005", "class": "Grade 2", "section": "A" },
+    { "name": "Zainab Ali", "email": "zainab.ali@peers.local", "admission": "ADM-2026-0006", "class": "Grade 3", "section": "A" },
+    { "name": "Omar Siddiqui", "email": "omar.siddiqui@peers.local", "admission": "ADM-2026-0007", "class": "Grade 3", "section": "A" },
+    { "name": "Maryam Iqbal", "email": "maryam.iqbal@peers.local", "admission": "ADM-2026-0008", "class": "Grade 4", "section": "A" },
+    { "name": "Usman Tariq", "email": "usman.tariq@peers.local", "admission": "ADM-2026-0009", "class": "Grade 4", "section": "A" },
+    { "name": "Hira Nawaz", "email": "hira.nawaz@peers.local", "admission": "ADM-2026-0010", "class": "Grade 5", "section": "A" }
+  ],
+  "security": {
+    "institutionIsolation": "All data scoped by institution_id except owner",
+    "jwtHeader": "Authorization: Bearer <token>",
+    "loginRateLimit": "50 attempts per 15 min (dev), configurable via LOGIN_RATE_LIMIT_MAX",
+    "teacherAttendanceGuard": "teacher_assignments must match class_id (+ section_id)"
+  },
+  "fileStructure": {
+    "backend": {
+      "src/index.js": "Express app entry + route mounting",
+      "src/controllers": "Business logic per module",
+      "src/routes": "API routes",
+      "src/database/migrations": "SQL migrations",
+      "src/database/seed.js": "Base seed",
+      "scripts/seed-full-demo.js": "Full demo data",
+      "scripts/seed-peers-academic-demo.js": "Subjects + timetable only"
+    },
+    "frontend": {
+      "src/App.jsx": "All routes",
+      "src/utils/menus.js": "Sidebar menus per role",
+      "src/services/authService.js": "API client wrappers",
+      "src/pages/shared": "Shared pages (Students, Teachers, Attendance, etc.)",
+      "src/pages/shared/AcademicSetupPage.jsx": "Principal setup guide"
+    }
+  }
+}
