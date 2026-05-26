@@ -1,8 +1,10 @@
 const pool = require('../config/db');
 const { buildInstitutionWhere } = require('../middleware/institutionScopeMiddleware');
+const { fetchActiveStudent } = require('../utils/resolveActiveStudent');
 
-const MANAGE_ROLES = ['owner', 'principal', 'admin'];
-const VIEW_ROLES = [...MANAGE_ROLES, 'teacher', 'student', 'parent'];
+const { FULL_ACCESS_ROLES, PRINCIPAL_ROLE } = require('../constants/roles');
+const MANAGE_ROLES = FULL_ACCESS_ROLES;
+const VIEW_ROLES = [...MANAGE_ROLES, PRINCIPAL_ROLE, 'teacher', 'student', 'parent'];
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -332,16 +334,11 @@ async function getTeacherTimetable(req, res, next) {
 
 async function getStudentMeTimetable(req, res, next) {
   try {
-    const [students] = await pool.query(
-      `SELECT s.*, c.name AS class_name, sec.name AS section_name
-       FROM students s
-       LEFT JOIN classes c ON c.id = s.class_id
-       LEFT JOIN sections sec ON sec.id = s.section_id
-       WHERE s.user_id = ? AND s.status = ?`,
-      [req.user.user_id, 'active']
-    );
-    if (!students.length) return res.status(404).json({ success: false, message: 'Student profile not found' });
-    const student = students[0];
+    const student = await fetchActiveStudent(pool, req.user.user_id, {
+      select: 's.*, c.name AS class_name, sec.name AS section_name',
+      joins: 'LEFT JOIN classes c ON c.id = s.class_id LEFT JOIN sections sec ON sec.id = s.section_id',
+    });
+    if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
     if (!student.class_id) {
       return res.json({ success: true, data: { entries: [], is_published: false, student } });
     }
@@ -433,6 +430,22 @@ async function publishTimetable(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function publishTimetableClass(req, res, next) {
+  try {
+    const classId = parseInt(req.params.classId, 10);
+    const institutionId = resolveInstitutionId(req);
+    if (!institutionId || !classId) {
+      return res.status(400).json({ success: false, message: 'institution_id and class_id required' });
+    }
+    const [result] = await pool.query(
+      `UPDATE timetable_entries SET is_published = TRUE
+       WHERE institution_id = ? AND class_id = ? AND status = 'active'`,
+      [institutionId, classId]
+    );
+    res.json({ success: true, message: 'Timetable published for all sections', data: { affected: result.affectedRows } });
+  } catch (err) { next(err); }
+}
+
 async function unpublishTimetable(req, res, next) {
   try {
     const { class_id, section_id } = req.body;
@@ -477,6 +490,6 @@ module.exports = {
   listPeriods, createPeriod, updatePeriod, deletePeriod,
   listEntries, createEntry, updateEntry, deleteEntry,
   getClassSectionTimetable, getTeacherTimetable, getTeacherMeTimetable, getStudentMeTimetable, getParentChildTimetable,
-  publishTimetable, unpublishTimetable, checkConflicts,
+  publishTimetable, publishTimetableClass, unpublishTimetable, checkConflicts,
   DAYS, MANAGE_ROLES, VIEW_ROLES,
 };

@@ -34,7 +34,8 @@ export default function LoginPage() {
         <div className="mt-6 p-4 bg-gray-50 rounded-lg text-xs text-gray-600">
           <p className="font-medium mb-2">Demo Accounts:</p>
           <p>Owner: owner@cms.local / owner123</p>
-          <p>Principal: principal@peers.local / password123</p>
+          <p>School Administrator: principal@peers.local / password123</p>
+          <p>Principal Portal: principal.portal@peers.local / password123</p>
           <p>Finance: finance@peers.local / password123</p>
           <p>Teacher: teacher@peers.local / password123</p>
           <p>Student: student@peers.local / password123</p>

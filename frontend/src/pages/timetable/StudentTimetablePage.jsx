@@ -34,12 +34,18 @@ export default function StudentTimetablePage() {
           {classLabel}{sectionLabel ? ` · Section ${sectionLabel}` : ''}
         </p>
       )}
-      <p className="text-sm text-gray-500 mb-6">Aapki class ka weekly schedule — sirf published periods dikhte hain.</p>
+      <p className="text-sm text-gray-500 mb-6">Your class weekly schedule — only published periods are shown.</p>
       <Alert type="error" message={err} onClose={() => setErr('')} />
       {loading ? <Spinner /> : entries.length ? (
         <Card><TimetableGrid entries={entries} periods={periods} /></Card>
       ) : (
-        <EmptyState message="No published timetable for your class yet. Principal will publish from Class Timetable." />
+        <EmptyState
+          message={
+            classLabel
+              ? `No published timetable for ${classLabel}${sectionLabel ? ` · Section ${sectionLabel}` : ''} yet. School admin must add slots in Class Timetable and click Publish.`
+              : 'Your class is not set on your profile. Ask school admin to assign class and section, then publish the timetable.'
+          }
+        />
       )}
     </DashboardLayout>
   );

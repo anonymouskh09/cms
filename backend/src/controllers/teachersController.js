@@ -74,18 +74,53 @@ async function listOverview(req, res, next) {
 
 async function getById(req, res, next) {
   try {
-    const [teachers] = await pool.query('SELECT * FROM teachers WHERE id = ?', [req.params.id]);
+    const [teachers] = await pool.query(
+      `SELECT t.*, u.email AS user_email, i.name AS institution_name
+       FROM teachers t
+       LEFT JOIN users u ON t.user_id = u.id
+       LEFT JOIN institutions i ON t.institution_id = i.id
+       WHERE t.id = ?`,
+      [req.params.id]
+    );
     if (!teachers.length) return res.status(404).json({ success: false, message: 'Teacher not found' });
+
+    const teacher = teachers[0];
+    if (req.institutionFilter && teacher.institution_id !== req.institutionFilter) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
     const [assignments] = await pool.query(
       `SELECT ta.*, c.name AS class_name, sec.name AS section_name, sub.name AS subject_name
        FROM teacher_assignments ta
        LEFT JOIN classes c ON ta.class_id = c.id
        LEFT JOIN sections sec ON ta.section_id = sec.id
        LEFT JOIN subjects sub ON ta.subject_id = sub.id
-       WHERE ta.teacher_id = ?`,
+       WHERE ta.teacher_id = ?
+       ORDER BY c.name, sub.name`,
       [req.params.id]
     );
-    res.json({ success: true, data: { ...teachers[0], assignments } });
+
+    const [timetable] = await pool.query(
+      `${timetableEntrySelect}
+       WHERE te.status = 'active' AND te.teacher_id = ?
+       ORDER BY FIELD(te.day_of_week, 'monday','tuesday','wednesday','thursday','friday','saturday','sunday'),
+         tp.period_no`,
+      [req.params.id]
+    );
+
+    const uniqueClasses = new Set(assignments.map((a) => a.class_id).filter(Boolean));
+    const uniqueSubjects = new Set(assignments.map((a) => a.subject_id).filter(Boolean));
+
+    res.json({
+      success: true,
+      data: {
+        ...teacher,
+        assignments,
+        timetable,
+        assigned_classes_count: uniqueClasses.size,
+        assigned_subjects_count: uniqueSubjects.size,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -183,4 +218,31 @@ async function getMe(req, res, next) {
   }
 }
 
-module.exports = { list, listOverview, getById, create, update, assign, removeAssignment, getMe };
+async function remove(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const [existing] = await conn.query('SELECT user_id, institution_id FROM teachers WHERE id = ?', [req.params.id]);
+    if (!existing.length) return res.status(404).json({ success: false, message: 'Teacher not found' });
+    if (req.institutionFilter && existing[0].institution_id !== req.institutionFilter) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    const userId = existing[0].user_id;
+    await conn.beginTransaction();
+    await conn.query('DELETE FROM teachers WHERE id = ?', [req.params.id]);
+    if (userId) {
+      await conn.query('DELETE FROM users WHERE id = ?', [userId]);
+    }
+    await conn.commit();
+    res.json({ success: true, message: 'Teacher deleted permanently' });
+  } catch (err) {
+    await conn.rollback();
+    if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.errno === 1451) {
+      return res.status(400).json({ success: false, message: 'Cannot delete teacher: remove timetable or assignments first.' });
+    }
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
+module.exports = { list, listOverview, getById, create, update, remove, assign, removeAssignment, getMe };

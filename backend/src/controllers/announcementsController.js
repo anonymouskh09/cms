@@ -2,7 +2,8 @@ const pool = require('../config/db');
 const { buildInstitutionWhere } = require('../middleware/institutionScopeMiddleware');
 const { logAudit } = require('../utils/auditLog');
 
-const MANAGE_ROLES = ['owner', 'principal', 'admin', 'teacher'];
+const { FULL_ACCESS_ROLES, PRINCIPAL_ROLE } = require('../constants/roles');
+const MANAGE_ROLES = [...FULL_ACCESS_ROLES, PRINCIPAL_ROLE, 'teacher'];
 const READ_ROLES = [...MANAGE_ROLES, 'student', 'parent', 'finance_manager'];
 
 function canManage(req) {

@@ -58,17 +58,38 @@ export default function ClassTimetablePage() {
 
   const sectionIdForApi = () => (filters.mode === 'class' ? null : (filters.section_id ? parseInt(filters.section_id, 10) : null));
 
-  const teachersForForm = useMemo(() => {
-    if (!form.subject_id || !filters.class_id) return teachersOverview;
+  const teachersForClass = useMemo(() => {
+    if (!filters.class_id) return [];
     const cid = parseInt(filters.class_id, 10);
     const sid = sectionIdForApi();
-    const subId = parseInt(form.subject_id, 10);
-    return teachersOverview.filter((t) => (t.assignments || []).some((a) => {
-      if (Number(a.class_id) !== cid || Number(a.subject_id) !== subId) return false;
-      if (sid == null) return true;
-      return a.section_id == null || Number(a.section_id) === sid;
-    }));
-  }, [form.subject_id, filters.class_id, filters.section_id, filters.mode, teachersOverview]);
+    const seen = new Map();
+    teachersOverview.forEach((t) => {
+      const match = (t.assignments || []).some((a) => {
+        if (Number(a.class_id) !== cid) return false;
+        if (sid == null) return true;
+        return a.section_id == null || Number(a.section_id) === sid;
+      });
+      if (match) seen.set(t.id, t);
+    });
+    return [...seen.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  }, [filters.class_id, filters.section_id, filters.mode, teachersOverview]);
+
+  const subjectsForTeacher = useMemo(() => {
+    if (!form.teacher_id || !filters.class_id) return [];
+    const teacher = teachersOverview.find((t) => String(t.id) === String(form.teacher_id));
+    if (!teacher) return [];
+    const cid = parseInt(filters.class_id, 10);
+    const sid = sectionIdForApi();
+    const subjectIds = new Set();
+    (teacher.assignments || []).forEach((a) => {
+      if (Number(a.class_id) !== cid) return;
+      if (sid != null && a.section_id != null && Number(a.section_id) !== sid) return;
+      if (a.subject_id) subjectIds.add(Number(a.subject_id));
+    });
+    return subjectsForClass.filter((s) => subjectIds.has(Number(s.id)));
+  }, [form.teacher_id, filters.class_id, filters.section_id, filters.mode, teachersOverview, subjectsForClass]);
+
+  const draftCount = useMemo(() => entries.filter((e) => !e.is_published).length, [entries]);
 
   useEffect(() => {
     if (!filters.class_id) return;
@@ -100,6 +121,14 @@ export default function ClassTimetablePage() {
   const handleSave = async (force = false) => {
     setErr('');
     setConflicts([]);
+    if (!form.teacher_id) {
+      setErr('Please select a teacher');
+      return;
+    }
+    if (!form.subject_id) {
+      setErr('Please select a subject for this teacher');
+      return;
+    }
     const payload = {
       ...form,
       class_id: parseInt(filters.class_id, 10),
@@ -112,7 +141,11 @@ export default function ClassTimetablePage() {
     try {
       if (editId) await timetableService.entries.update(editId, payload);
       else await timetableService.entries.create(payload);
-      setMsg(editId ? 'Entry updated' : 'Entry created');
+      setMsg(
+        editId
+          ? 'Entry updated (draft). Click Publish so students and teachers can see it.'
+          : 'Entry created (draft). Click Publish so students and teachers can see it.'
+      );
       setModal(false);
       loadTimetable();
     } catch (e) {
@@ -132,12 +165,33 @@ export default function ClassTimetablePage() {
     loadTimetable();
   };
 
-  const handlePublish = async (publish) => {
-    const body = { class_id: parseInt(filters.class_id, 10), section_id: sectionIdForApi() };
-    if (publish) await timetableService.publish(body);
-    else await timetableService.unpublish(body);
-    setMsg(publish ? 'Timetable published — students & teachers can see it' : 'Timetable unpublished');
-    loadTimetable();
+  const handlePublish = async (publish, allSections = false) => {
+    setErr('');
+    const classId = parseInt(filters.class_id, 10);
+    try {
+      if (publish) {
+        const res = allSections
+          ? await timetableService.publishClass(classId)
+          : await timetableService.publish({ class_id: classId, section_id: sectionIdForApi() });
+        const affected = res.data?.data?.affected ?? 0;
+        if (!affected) {
+          setErr('No timetable entries to publish. Add entries first, then click Publish.');
+          return;
+        }
+        setMsg(
+          allSections
+            ? `Published ${affected} slot(s) for this class (all sections). Students and teachers can now see them.`
+            : `Published ${affected} slot(s). Students and teachers can now see them.`
+        );
+      } else {
+        const body = { class_id: classId, section_id: sectionIdForApi() };
+        await timetableService.unpublish(body);
+        setMsg('Timetable unpublished');
+      }
+      loadTimetable();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Publish failed');
+    }
   };
 
   const openEdit = (entry) => {
@@ -159,8 +213,8 @@ export default function ClassTimetablePage() {
     <DashboardLayout>
       <h2 className="text-2xl font-bold mb-2">Class Timetable</h2>
       <p className="text-sm text-gray-500 mb-6">
-        Har class ka alag timetable. Class select karein — sirf us class ke subjects dikhenge.
-        Publish ke baad students apni class ka aur teachers apna timetable dekhenge.
+        Each class has its own timetable. Select a class to see only subjects assigned to that class.
+        After you publish, students see their class schedule and teachers see their own timetable.
       </p>
       <Alert type="success" message={msg} onClose={() => setMsg('')} />
       <Alert type="error" message={err} onClose={() => setErr('')} />
@@ -189,10 +243,17 @@ export default function ClassTimetablePage() {
           )}
           {filters.class_id && (
             <>
-              <Button onClick={() => { setEditId(null); setForm({ day_of_week: 'monday' }); setModal(true); }} disabled={!subjectsForClass.length}>
+              <Button onClick={() => { setEditId(null); setForm({ day_of_week: 'monday', teacher_id: '', subject_id: '' }); setModal(true); }} disabled={!subjectsForClass.length || !teachersForClass.length}>
                 Add Entry
               </Button>
-              <Button variant="success" onClick={() => handlePublish(true)}>Publish</Button>
+              <Button variant="success" onClick={() => handlePublish(true)} disabled={!entries.length}>
+                Publish {filters.mode === 'section' && selectedSectionName ? `Section ${selectedSectionName}` : 'class-wide'}
+              </Button>
+              {filters.mode === 'section' && (
+                <Button variant="success" onClick={() => handlePublish(true, true)} disabled={!entries.length} title="Publish every section of this class at once">
+                  Publish all sections
+                </Button>
+              )}
               <Button variant="secondary" onClick={() => handlePublish(false)}>Unpublish</Button>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                 {published ? 'Published' : 'Draft'}
@@ -202,10 +263,16 @@ export default function ClassTimetablePage() {
         </div>
         {filters.class_id && !subjectsForClass.length && (
           <p className="text-sm text-amber-700 mt-4">
-            Is class ke subjects assign nahi. Pehle <strong>Class Subjects</strong> se subjects assign karein.
+            No subjects assigned to this class yet. Assign subjects first under <strong>Class Subjects</strong>.
           </p>
         )}
       </Card>
+      {draftCount > 0 && (
+        <Alert
+          type="warning"
+          message={`${draftCount} timetable slot(s) are still draft. Teachers and students will not see them until you click Publish.`}
+        />
+      )}
       {loading ? <Spinner /> : filters.class_id ? (
         <>
           <Card className="mb-4 bg-violet-50 border-violet-100">
@@ -253,13 +320,31 @@ export default function ClassTimetablePage() {
           options={DAYS.map((d) => ({ value: d, label: DAY_LABELS[d] }))} />
         <Select label="Period" value={form.timetable_period_id || ''} onChange={(e) => setForm({ ...form, timetable_period_id: e.target.value })}
           options={[{ value: '', label: 'Select' }, ...periods.filter((p) => !p.is_break).map((p) => ({ value: p.id, label: `${p.name} (${String(p.start_time).slice(0, 5)})` }))]} />
-        <Select label="Subject (this class only)" value={form.subject_id || ''} onChange={(e) => setForm({ ...form, subject_id: e.target.value, teacher_id: '' })}
-          options={[{ value: '', label: 'Select' }, ...subjectsForClass.map((s) => ({ value: s.id, label: `${s.name}${s.code ? ` (${s.code})` : ''}` }))]} />
-        <Select label="Teacher (assigned to this class/subject)" value={form.teacher_id || ''} onChange={(e) => setForm({ ...form, teacher_id: e.target.value })}
+        <Select
+          label="Teacher *"
+          value={form.teacher_id || ''}
+          onChange={(e) => setForm({ ...form, teacher_id: e.target.value, subject_id: '' })}
           options={[
-            { value: '', label: teachersForForm.length ? 'Select teacher' : 'No teacher assigned — assign in Teachers' },
-            ...teachersForForm.map((t) => ({ value: t.id, label: t.name })),
-          ]} />
+            { value: '', label: teachersForClass.length ? 'Select teacher' : 'No teacher assigned to this class — assign in Teachers' },
+            ...teachersForClass.map((t) => ({ value: t.id, label: t.name })),
+          ]}
+        />
+        <Select
+          label="Subject * (assigned to selected teacher)"
+          value={form.subject_id || ''}
+          onChange={(e) => setForm({ ...form, subject_id: e.target.value })}
+          options={[
+            {
+              value: '',
+              label: !form.teacher_id
+                ? 'Select teacher first'
+                : subjectsForTeacher.length
+                  ? 'Select subject'
+                  : 'This teacher has no subject for this class/section',
+            },
+            ...subjectsForTeacher.map((s) => ({ value: s.id, label: `${s.name}${s.code ? ` (${s.code})` : ''}` })),
+          ]}
+        />
         <Input label="Room / Lab" value={form.room || ''} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="Room 101 / Lab A" />
         <Button onClick={() => handleSave(false)} className="w-full mt-4">Save</Button>
       </Modal>

@@ -35,9 +35,16 @@ export default function FinanceDashboard() {
         title="Fee & Collection"
         subtitle="Monthly collection and outstanding balances"
         action={
-          <Link to="/finance/challans">
-            <Button size="sm">Manage Challans</Button>
-          </Link>
+          <div className="flex gap-2">
+            {(data?.pending_fee_setups > 0) && (
+              <Link to="/finance/new-student-fees">
+                <Button size="sm" variant="secondary">{data.pending_fee_setups} fee setup(s)</Button>
+              </Link>
+            )}
+            <Link to="/finance/challans">
+              <Button size="sm">Manage Challans</Button>
+            </Link>
+          </div>
         }
       />
 

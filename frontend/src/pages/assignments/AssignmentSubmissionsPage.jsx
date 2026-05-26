@@ -10,7 +10,7 @@ export default function AssignmentSubmissionsPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const base = user.role === 'teacher' ? '/teacher' : user.role === 'admin' ? '/admin' : user.role === 'owner' ? '/owner' : '/principal';
-  const canGrade = user.role === 'teacher' || ['owner', 'principal', 'admin'].includes(user.role);
+  const canGrade = user.role === 'teacher' || ['owner', 'school_administrator', 'admin', 'principal'].includes(user.role);
   const [data, setData] = useState(null);
   const [viewRow, setViewRow] = useState(null);
   const [gradeModal, setGradeModal] = useState(null);

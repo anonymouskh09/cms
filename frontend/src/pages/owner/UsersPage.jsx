@@ -34,7 +34,7 @@ export default function UsersPage() {
       <Card>
         <div className="flex gap-4 mb-4">
           <Select value={filters.role} onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-            options={[{ value: '', label: 'All Roles' }, { value: 'owner', label: 'Owner' }, { value: 'principal', label: 'Principal' }, { value: 'admin', label: 'Admin' }, { value: 'teacher', label: 'Teacher' }, { value: 'student', label: 'Student' }, { value: 'parent', label: 'Parent' }, { value: 'finance_manager', label: 'Finance Manager' }]} />
+            options={[{ value: '', label: 'All Roles' }, { value: 'owner', label: 'Owner' }, { value: 'school_administrator', label: 'School Administrator' }, { value: 'principal', label: 'Principal' }, { value: 'admin', label: 'Admin' }, { value: 'teacher', label: 'Teacher' }, { value: 'student', label: 'Student' }, { value: 'parent', label: 'Parent' }, { value: 'finance_manager', label: 'Finance Manager' }]} />
           <Select value={filters.institution_id} onChange={(e) => setFilters({ ...filters, institution_id: e.target.value })}
             options={[{ value: '', label: 'All Institutions' }, { value: '1', label: 'Schools' }, { value: '2', label: 'Primal Academy' }]} />
         </div>
@@ -54,7 +54,10 @@ export default function UsersPage() {
         <Input label="Phone" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         <Input label="Password" type="password" value={form.password || ''} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         <Select label="Role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
-          options={['principal', 'admin', 'teacher', 'student', 'parent', 'finance_manager'].map((r) => ({ value: r, label: r.replace('_', ' ') }))} />
+          options={['school_administrator', 'principal', 'admin', 'teacher', 'student', 'parent', 'finance_manager'].map((r) => ({
+            value: r,
+            label: r === 'school_administrator' ? 'School Administrator' : r.replace(/_/g, ' '),
+          }))} />
         <Select label="Institution" value={form.institution_id || ''} onChange={(e) => setForm({ ...form, institution_id: parseInt(e.target.value) })}
           options={[{ value: 1, label: 'Schools' }, { value: 2, label: 'Primal Academy' }]} />
         <Button onClick={handleCreate} className="w-full mt-4">Create User</Button>

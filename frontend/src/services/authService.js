@@ -10,6 +10,7 @@ export const authService = {
 export const dashboardService = {
   owner: (params) => api.get('/dashboard/owner', { params }),
   principal: () => api.get('/dashboard/principal'),
+  principalPortal: () => api.get('/dashboard/principal-portal'),
   finance: () => api.get('/dashboard/finance'),
   student: () => api.get('/dashboard/student'),
   parent: () => api.get('/dashboard/parent'),
@@ -41,28 +42,32 @@ export const studentsService = {
   mySubjects: () => api.get('/students/me/subjects'),
   create: (data) => api.post('/students', data),
   update: (id, data) => api.put(`/students/${id}`, data),
+  remove: (id) => api.delete(`/students/${id}`),
 };
 
 export const parentsService = {
-  list: () => api.get('/parents'),
+  list: (params) => api.get('/parents', { params }),
+  update: (id, data) => api.put(`/parents/${id}`, data),
+  remove: (id) => api.delete(`/parents/${id}`),
   create: (data) => api.post('/parents', data),
   getChildren: () => api.get('/parents/children'),
   link: (data) => api.post('/parents/link', data),
 };
 
 export const teachersService = {
-  list: () => api.get('/teachers'),
-  overview: () => api.get('/teachers/overview'),
+  list: (params) => api.get('/teachers', { params }),
+  overview: (params) => api.get('/teachers/overview', { params }),
   me: () => api.get('/teachers/me'),
   get: (id) => api.get(`/teachers/${id}`),
   create: (data) => api.post('/teachers', data),
   update: (id, data) => api.put(`/teachers/${id}`, data),
+  remove: (id) => api.delete(`/teachers/${id}`),
   assign: (data) => api.post('/teachers/assign', data),
   removeAssignment: (assignmentId) => api.delete(`/teachers/assign/${assignmentId}`),
 };
 
 export const classSubjectsService = {
-  list: () => api.get('/class-subjects'),
+  list: (params) => api.get('/class-subjects', { params }),
   listByClass: (classId) => api.get(`/class-subjects/class/${classId}`),
   assign: (data) => api.post('/class-subjects', data),
   assignBulk: (data) => api.post('/class-subjects/bulk', data),
@@ -70,9 +75,9 @@ export const classSubjectsService = {
 };
 
 export const academicService = {
-  classes: { list: () => api.get('/classes'), create: (d) => api.post('/classes', d), update: (id, d) => api.put(`/classes/${id}`, d) },
-  sections: { list: () => api.get('/sections'), create: (d) => api.post('/sections', d), update: (id, d) => api.put(`/sections/${id}`, d) },
-  subjects: { list: () => api.get('/subjects'), create: (d) => api.post('/subjects', d), update: (id, d) => api.put(`/subjects/${id}`, d) },
+  classes: { list: (params) => api.get('/classes', { params }), create: (d) => api.post('/classes', d), update: (id, d) => api.put(`/classes/${id}`, d), remove: (id) => api.delete(`/classes/${id}`) },
+  sections: { list: (params) => api.get('/sections', { params }), create: (d) => api.post('/sections', d), update: (id, d) => api.put(`/sections/${id}`, d), remove: (id) => api.delete(`/sections/${id}`) },
+  subjects: { list: (params) => api.get('/subjects', { params }), create: (d) => api.post('/subjects', d), update: (id, d) => api.put(`/subjects/${id}`, d), remove: (id) => api.delete(`/subjects/${id}`) },
 };
 
 export const attendanceService = {
@@ -96,12 +101,20 @@ export const attendanceService = {
   },
 };
 
+export const studentFeeProfilesService = {
+  listPending: () => api.get('/student-fee-profiles/pending'),
+  get: (studentId) => api.get(`/student-fee-profiles/student/${studentId}`),
+  save: (studentId, data) => api.put(`/student-fee-profiles/student/${studentId}`, data),
+};
+
 export const financeService = {
   feeStructures: { list: () => api.get('/finance/fee-structures'), create: (d) => api.post('/finance/fee-structures', d) },
   challans: {
     list: (params) => api.get('/finance/challans', { params }),
     generate: (d) => api.post('/finance/challans/generate', d),
     bulkGenerate: (d) => api.post('/finance/challans/bulk-generate', d),
+    generateNextMonth: (d) => api.post('/finance/challans/generate-next-month', d),
+    activeProfilesCount: () => api.get('/finance/challans/active-profiles-count'),
     generationLogs: (params) => api.get('/finance/challans/generation-logs', { params }),
     regenerate: (id) => api.post(`/finance/challans/${id}/regenerate`),
     cancel: (id, d) => api.post(`/finance/challans/${id}/cancel`, d),
@@ -176,6 +189,7 @@ export const timetableService = {
   studentMe: () => api.get('/timetable/student/me'),
   parentChild: (studentId) => api.get(`/timetable/parent/child/${studentId}`),
   publish: (d) => api.post('/timetable/publish', d),
+  publishClass: (classId) => api.post(`/timetable/publish/class/${classId}`),
   unpublish: (d) => api.post('/timetable/unpublish', d),
   checkConflicts: (d) => api.post('/timetable/check-conflicts', d),
 };
@@ -317,4 +331,17 @@ export const systemService = {
 export const integrationsService = {
   getQrAttendance: () => api.get('/integrations/qr-attendance'),
   getNotifications: () => api.get('/integrations/notifications'),
+};
+
+export const principalPortalService = {
+  listRemarks: (params) => api.get('/principal-portal/remarks', { params }),
+  createRemark: (data) => api.post('/principal-portal/remarks', data),
+  listApprovals: (params) => api.get('/principal-portal/approvals', { params }),
+  upsertApproval: (data) => api.post('/principal-portal/approvals', data),
+  listMeetings: () => api.get('/principal-portal/meetings'),
+  createMeeting: (data) => api.post('/principal-portal/meetings', data),
+  updateMeeting: (id, data) => api.patch(`/principal-portal/meetings/${id}`, data),
+  listAlerts: () => api.get('/principal-portal/alerts'),
+  pendingResults: () => api.get('/principal-portal/pending-results'),
+  setNeedsAttention: (studentId, needs_attention) => api.patch(`/principal-portal/students/${studentId}/needs-attention`, { needs_attention }),
 };

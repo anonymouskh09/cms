@@ -44,7 +44,7 @@ export default function TeacherTimetablePage({ adminView = false }) {
       <h2 className="text-2xl font-bold mb-2">{adminView ? 'Teacher Timetable' : 'My Timetable'}</h2>
       {!adminView && (
         <p className="text-sm text-gray-500 mb-4">
-          Sirf woh periods jahan aap assigned teacher hain (jo Class Timetable mein set hue).
+          Signed in as <strong>{user?.name}</strong> ({user?.email}). Only periods where <em>you</em> are selected as teacher in Class Timetable appear here (not other teachers&apos; slots).
         </p>
       )}
       <Alert type="error" message={err} onClose={() => setErr('')} />
@@ -78,7 +78,9 @@ export default function TeacherTimetablePage({ adminView = false }) {
         <EmptyState
           message={adminView && !teacherId
             ? 'Select a teacher to view timetable.'
-            : 'No published timetable slots yet. Principal must add you in Class Timetable and publish.'}
+            : myAssignments.length
+              ? 'No published slots where you are the assigned teacher. In Class Timetable, each period must list you (not another teacher), then Publish.'
+              : 'No class assignments yet. School admin must assign you to subjects in Teachers, then add timetable slots.'}
         />
       )}
     </DashboardLayout>

@@ -4,10 +4,30 @@ import ProtectedRoute, { RolePathRoute as RoleRoute } from './routes/ProtectedRo
 import LoginPage from './pages/auth/LoginPage';
 
 import OwnerDashboard from './pages/owner/OwnerDashboard';
-import InstitutionsPage from './pages/owner/InstitutionsPage';
-import UsersPage from './pages/owner/UsersPage';
+import OwnerMonitoringShell from './pages/owner-portal/OwnerMonitoringShell';
+import OwnerInstitutionsViewPage from './pages/owner-portal/OwnerInstitutionsViewPage';
+
+function OwnerViewRoute({ children }) {
+  return <OwnerMonitoringShell>{children}</OwnerMonitoringShell>;
+}
 
 import PrincipalDashboard from './pages/principal/PrincipalDashboard';
+import PrincipalPortalDashboard from './pages/principal-portal/PrincipalPortalDashboard';
+import PrincipalPortalStudentsPage from './pages/principal-portal/PrincipalPortalStudentsPage';
+import PrincipalPortalStudentProfilePage from './pages/principal-portal/PrincipalPortalStudentProfilePage';
+import PrincipalPortalTeachersPage from './pages/principal-portal/PrincipalPortalTeachersPage';
+import PrincipalPortalTeacherProfilePage from './pages/principal-portal/PrincipalPortalTeacherProfilePage';
+import PrincipalPortalClassesPage from './pages/principal-portal/PrincipalPortalClassesPage';
+import PrincipalPortalAttendancePage from './pages/principal-portal/PrincipalPortalAttendancePage';
+import PrincipalPortalExamsPage from './pages/principal-portal/PrincipalPortalExamsPage';
+import PrincipalPortalResultsPage from './pages/principal-portal/PrincipalPortalResultsPage';
+import PrincipalPortalTimetablePage from './pages/principal-portal/PrincipalPortalTimetablePage';
+import PrincipalPortalClassTimetablePage from './pages/principal-portal/PrincipalPortalClassTimetablePage';
+import PrincipalPortalTeacherTimetablePage from './pages/principal-portal/PrincipalPortalTeacherTimetablePage';
+import PrincipalPortalConflictPage from './pages/principal-portal/PrincipalPortalConflictPage';
+import PrincipalPortalFeesPage from './pages/principal-portal/PrincipalPortalFeesPage';
+import PrincipalPortalAnnouncementsPage from './pages/principal-portal/PrincipalPortalAnnouncementsPage';
+import PrincipalPortalParentsPage from './pages/principal-portal/PrincipalPortalParentsPage';
 import StudentsPage from './pages/shared/StudentsPage';
 import StudentProfilePage from './pages/shared/StudentProfilePage';
 import ParentsPage from './pages/shared/ParentsPage';
@@ -29,6 +49,7 @@ import PlaceholderPage from './pages/shared/PlaceholderPage';
 import FinanceDashboard from './pages/finance/FinanceDashboard';
 import { FeeStructuresPage, ChallansPage, DefaultersPage } from './pages/finance/FinancePages';
 import BulkChallanGenerationPage from './pages/finance/BulkChallanGenerationPage';
+import NewStudentFeeSetupPage from './pages/finance/NewStudentFeeSetupPage';
 import ChallanGenerationLogsPage from './pages/finance/ChallanGenerationLogsPage';
 import PaymentHistoryPage from './pages/finance/PaymentHistoryPage';
 import FinanceCollectionReportsPage from './pages/finance/FinanceCollectionReportsPage';
@@ -124,118 +145,97 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><RoleRedirect /></ProtectedRoute>} />
 
       <Route path="/owner/dashboard" element={<RoleRoute allowedRoles={['owner']}><OwnerDashboard /></RoleRoute>} />
-      <Route path="/owner/academic-setup" element={<RoleRoute allowedRoles={['owner']}><AcademicSetupPage /></RoleRoute>} />
-      <Route path="/owner/institutions" element={<RoleRoute allowedRoles={['owner']}><InstitutionsPage /></RoleRoute>} />
-      <Route path="/owner/users" element={<RoleRoute allowedRoles={['owner']}><UsersPage /></RoleRoute>} />
-      <Route path="/owner/students" element={<RoleRoute allowedRoles={['owner']}><StudentsPage /></RoleRoute>} />
-      <Route path="/owner/students/:id" element={<RoleRoute allowedRoles={['owner']}><StudentProfilePage /></RoleRoute>} />
-      <Route path="/owner/parents" element={<RoleRoute allowedRoles={['owner']}><ParentsPage /></RoleRoute>} />
-      <Route path="/owner/teachers" element={<RoleRoute allowedRoles={['owner']}><TeachersPage /></RoleRoute>} />
-      <Route path="/owner/classes" element={<RoleRoute allowedRoles={['owner']}><AcademicPage type="classes" title="Classes" /></RoleRoute>} />
-      <Route path="/owner/sections" element={<RoleRoute allowedRoles={['owner']}><AcademicPage type="sections" title="Sections" /></RoleRoute>} />
-      <Route path="/owner/subjects" element={<RoleRoute allowedRoles={['owner']}><AcademicPage type="subjects" title="Subjects" /></RoleRoute>} />
-      <Route path="/owner/class-subjects" element={<RoleRoute allowedRoles={['owner']}><ClassSubjectsPage /></RoleRoute>} />
-      <Route path="/owner/attendance" element={<RoleRoute allowedRoles={['owner']}><AttendanceHubPage /></RoleRoute>} />
-      <Route path="/owner/attendance/mark" element={<RoleRoute allowedRoles={['owner']}><AttendancePage canMark /></RoleRoute>} />
-      <Route path="/owner/attendance/calendar" element={<RoleRoute allowedRoles={['owner']}><AttendanceCalendarPage /></RoleRoute>} />
-      <Route path="/owner/attendance/reports/class" element={<RoleRoute allowedRoles={['owner']}><ClassAttendanceReportPage /></RoleRoute>} />
-      <Route path="/owner/attendance/reports/student" element={<RoleRoute allowedRoles={['owner']}><StudentAttendanceReportPage /></RoleRoute>} />
-      <Route path="/owner/attendance/reports/absentees" element={<RoleRoute allowedRoles={['owner']}><AbsenteeReportPage /></RoleRoute>} />
-      <Route path="/owner/attendance/reports/late" element={<RoleRoute allowedRoles={['owner']}><LateArrivalReportPage /></RoleRoute>} />
-      <Route path="/owner/attendance/corrections" element={<RoleRoute allowedRoles={['owner']}><AttendanceCorrectionRequestsPage /></RoleRoute>} />
-      <Route path="/owner/results" element={<RoleRoute allowedRoles={['owner']}><ClassReportCardsPage /></RoleRoute>} />
-      <Route path="/owner/settings" element={<RoleRoute allowedRoles={['owner']}><PlaceholderPage title="Settings" message="System settings — Phase 2 placeholder." /></RoleRoute>} />
-      <Route path="/owner/reports" element={<RoleRoute allowedRoles={['owner']}><ReportsPage /></RoleRoute>} />
-      <Route path="/owner/timetable/setup" element={<RoleRoute allowedRoles={['owner']}><TimetableSetupPage /></RoleRoute>} />
-      <Route path="/owner/timetable/periods" element={<RoleRoute allowedRoles={['owner']}><PeriodManagementPage /></RoleRoute>} />
-      <Route path="/owner/timetable/class" element={<RoleRoute allowedRoles={['owner']}><ClassTimetablePage /></RoleRoute>} />
-      <Route path="/owner/timetable/teacher" element={<RoleRoute allowedRoles={['owner']}><TeacherTimetablePage adminView /></RoleRoute>} />
-      <Route path="/owner/timetable/conflicts" element={<RoleRoute allowedRoles={['owner']}><ConflictCheckerPage /></RoleRoute>} />
-      <Route path="/owner/exams/setup" element={<RoleRoute allowedRoles={['owner']}><ExamSetupPage /></RoleRoute>} />
-      <Route path="/owner/exams/types" element={<RoleRoute allowedRoles={['owner']}><ExamTypesPage /></RoleRoute>} />
-      <Route path="/owner/exams/list" element={<RoleRoute allowedRoles={['owner']}><ExamsPage /></RoleRoute>} />
-      <Route path="/owner/exams/:examId/schedule" element={<RoleRoute allowedRoles={['owner']}><ExamSchedulePage /></RoleRoute>} />
-      <Route path="/owner/exams/calendar" element={<RoleRoute allowedRoles={['owner']}><ExamCalendarPage /></RoleRoute>} />
-      <Route path="/owner/exams/published" element={<RoleRoute allowedRoles={['owner']}><PublishedExamsPage /></RoleRoute>} />
-      <Route path="/owner/report-cards" element={<RoleRoute allowedRoles={['owner']}><ReportCardsSetupPage /></RoleRoute>} />
-      <Route path="/owner/report-cards/generate" element={<RoleRoute allowedRoles={['owner']}><GenerateReportCardPage /></RoleRoute>} />
-      <Route path="/owner/report-cards/class" element={<RoleRoute allowedRoles={['owner']}><ClassReportCardsPage /></RoleRoute>} />
-      <Route path="/owner/assignments" element={<RoleRoute allowedRoles={['owner']}><TeacherAssignmentsPage adminView /></RoleRoute>} />
-      <Route path="/owner/assignments/:id/submissions" element={<RoleRoute allowedRoles={['owner']}><AssignmentSubmissionsPage /></RoleRoute>} />
-      <Route path="/owner/announcements" element={<RoleRoute allowedRoles={['owner']}><AnnouncementsListPage /></RoleRoute>} />
-      <Route path="/owner/announcements/create" element={<RoleRoute allowedRoles={['owner']}><CreateAnnouncementPage /></RoleRoute>} />
-      <Route path="/owner/announcements/:id" element={<RoleRoute allowedRoles={['owner']}><AnnouncementDetailsPage /></RoleRoute>} />
-      <Route path="/owner/ai/settings" element={<RoleRoute allowedRoles={['owner']}><AiSettingsPage /></RoleRoute>} />
-      <Route path="/owner/ai/logs" element={<RoleRoute allowedRoles={['owner']}><AiLogsPage /></RoleRoute>} />
-      <Route path="/owner/ai/syllabus" element={<RoleRoute allowedRoles={['owner']}><SyllabusUploadPage /></RoleRoute>} />
-      <Route path="/owner/ai/question-bank" element={<RoleRoute allowedRoles={['owner']}><QuestionBankPage /></RoleRoute>} />
-      <Route path="/owner/ai/exam-generator" element={<RoleRoute allowedRoles={['owner']}><ExamGeneratorPage /></RoleRoute>} />
-      <Route path="/owner/ai/exam-generator/new/build" element={<RoleRoute allowedRoles={['owner']}><ExamPaperBuilderPage /></RoleRoute>} />
-      <Route path="/owner/ai/exam-generator/:id/build" element={<RoleRoute allowedRoles={['owner']}><ExamPaperBuilderPage /></RoleRoute>} />
-      <Route path="/owner/ai/marking-scheme" element={<RoleRoute allowedRoles={['owner']}><MarkingSchemePage /></RoleRoute>} />
-      <Route path="/owner/ai/marking-scheme/:paperId" element={<RoleRoute allowedRoles={['owner']}><MarkingSchemePage /></RoleRoute>} />
-      <Route path="/owner/analytics" element={<RoleRoute allowedRoles={['owner']}><AcademicAnalyticsPage /></RoleRoute>} />
-      <Route path="/owner/analytics/weak-areas" element={<RoleRoute allowedRoles={['owner']}><WeakAreasPage /></RoleRoute>} />
-      <Route path="/owner/analytics/teachers" element={<RoleRoute allowedRoles={['owner']}><TeacherPerformancePage /></RoleRoute>} />
-      <Route path="/owner/system/health" element={<RoleRoute allowedRoles={['owner']}><SystemHealthPage /></RoleRoute>} />
-      <Route path="/owner/system/backup" element={<RoleRoute allowedRoles={['owner']}><BackupToolsPage /></RoleRoute>} />
-      <Route path="/owner/integrations/qr-attendance" element={<RoleRoute allowedRoles={['owner']}><QrAttendancePage /></RoleRoute>} />
-      <Route path="/owner/integrations/notifications" element={<RoleRoute allowedRoles={['owner']}><NotificationsPage /></RoleRoute>} />
+      <Route path="/owner/institutions" element={<RoleRoute allowedRoles={['owner']}><OwnerInstitutionsViewPage /></RoleRoute>} />
+      <Route path="/owner/students" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalStudentsPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/students/:id" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalStudentProfilePage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/parents" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalParentsPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/teachers" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalTeachersPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/teachers/:id" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalTeacherProfilePage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/classes" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalClassesPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/attendance" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalAttendancePage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/exams" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalExamsPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/results" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalResultsPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/timetable/class" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalClassTimetablePage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/timetable/teacher" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalTeacherTimetablePage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/timetable/conflicts" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalConflictPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/fees" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalFeesPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/announcements" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><PrincipalPortalAnnouncementsPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/announcements/:id" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><AnnouncementDetailsPage /></OwnerViewRoute></RoleRoute>} />
+      <Route path="/owner/analytics" element={<RoleRoute allowedRoles={['owner']}><OwnerViewRoute><AcademicAnalyticsPage /></OwnerViewRoute></RoleRoute>} />
 
-      <Route path="/principal/dashboard" element={<RoleRoute allowedRoles={['principal']}><PrincipalDashboard /></RoleRoute>} />
-      <Route path="/principal/academic-setup" element={<RoleRoute allowedRoles={['principal']}><AcademicSetupPage /></RoleRoute>} />
-      <Route path="/principal/students" element={<RoleRoute allowedRoles={['principal']}><StudentsPage /></RoleRoute>} />
-      <Route path="/principal/students/:id" element={<RoleRoute allowedRoles={['principal']}><StudentProfilePage /></RoleRoute>} />
-      <Route path="/principal/parents" element={<RoleRoute allowedRoles={['principal']}><ParentsPage /></RoleRoute>} />
-      <Route path="/principal/finance-staff" element={<RoleRoute allowedRoles={['principal']}><FinanceStaffPage /></RoleRoute>} />
-      <Route path="/principal/teachers" element={<RoleRoute allowedRoles={['principal']}><TeachersPage /></RoleRoute>} />
-      <Route path="/principal/classes" element={<RoleRoute allowedRoles={['principal']}><AcademicPage type="classes" title="Classes" /></RoleRoute>} />
-      <Route path="/principal/sections" element={<RoleRoute allowedRoles={['principal']}><AcademicPage type="sections" title="Sections" /></RoleRoute>} />
-      <Route path="/principal/subjects" element={<RoleRoute allowedRoles={['principal']}><AcademicPage type="subjects" title="Subjects" /></RoleRoute>} />
-      <Route path="/principal/class-subjects" element={<RoleRoute allowedRoles={['principal']}><ClassSubjectsPage /></RoleRoute>} />
-      <Route path="/principal/attendance" element={<RoleRoute allowedRoles={['principal']}><AttendanceHubPage /></RoleRoute>} />
-      <Route path="/principal/attendance/mark" element={<RoleRoute allowedRoles={['principal']}><AttendancePage canMark /></RoleRoute>} />
-      <Route path="/principal/attendance/calendar" element={<RoleRoute allowedRoles={['principal']}><AttendanceCalendarPage /></RoleRoute>} />
-      <Route path="/principal/attendance/reports/class" element={<RoleRoute allowedRoles={['principal']}><ClassAttendanceReportPage /></RoleRoute>} />
-      <Route path="/principal/attendance/reports/student" element={<RoleRoute allowedRoles={['principal']}><StudentAttendanceReportPage /></RoleRoute>} />
-      <Route path="/principal/attendance/reports/absentees" element={<RoleRoute allowedRoles={['principal']}><AbsenteeReportPage /></RoleRoute>} />
-      <Route path="/principal/attendance/reports/late" element={<RoleRoute allowedRoles={['principal']}><LateArrivalReportPage /></RoleRoute>} />
-      <Route path="/principal/attendance/corrections" element={<RoleRoute allowedRoles={['principal']}><AttendanceCorrectionRequestsPage /></RoleRoute>} />
-      <Route path="/principal/announcements" element={<RoleRoute allowedRoles={['principal']}><AnnouncementsListPage /></RoleRoute>} />
-      <Route path="/principal/announcements/create" element={<RoleRoute allowedRoles={['principal']}><CreateAnnouncementPage /></RoleRoute>} />
-      <Route path="/principal/announcements/:id" element={<RoleRoute allowedRoles={['principal']}><AnnouncementDetailsPage /></RoleRoute>} />
-      <Route path="/principal/reports" element={<RoleRoute allowedRoles={['principal']}><ReportsPage /></RoleRoute>} />
-      <Route path="/principal/timetable/setup" element={<RoleRoute allowedRoles={['principal']}><TimetableSetupPage /></RoleRoute>} />
-      <Route path="/principal/timetable/periods" element={<RoleRoute allowedRoles={['principal']}><PeriodManagementPage /></RoleRoute>} />
-      <Route path="/principal/timetable/class" element={<RoleRoute allowedRoles={['principal']}><ClassTimetablePage /></RoleRoute>} />
-      <Route path="/principal/timetable/teacher" element={<RoleRoute allowedRoles={['principal']}><TeacherTimetablePage adminView /></RoleRoute>} />
-      <Route path="/principal/timetable/conflicts" element={<RoleRoute allowedRoles={['principal']}><ConflictCheckerPage /></RoleRoute>} />
-      <Route path="/principal/exams/setup" element={<RoleRoute allowedRoles={['principal']}><ExamSetupPage /></RoleRoute>} />
-      <Route path="/principal/exams/types" element={<RoleRoute allowedRoles={['principal']}><ExamTypesPage /></RoleRoute>} />
-      <Route path="/principal/exams/list" element={<RoleRoute allowedRoles={['principal']}><ExamsPage /></RoleRoute>} />
-      <Route path="/principal/exams/:examId/schedule" element={<RoleRoute allowedRoles={['principal']}><ExamSchedulePage /></RoleRoute>} />
-      <Route path="/principal/exams/calendar" element={<RoleRoute allowedRoles={['principal']}><ExamCalendarPage /></RoleRoute>} />
-      <Route path="/principal/exams/published" element={<RoleRoute allowedRoles={['principal']}><PublishedExamsPage /></RoleRoute>} />
-      <Route path="/principal/results" element={<RoleRoute allowedRoles={['principal']}><ClassReportCardsPage /></RoleRoute>} />
-      <Route path="/principal/report-cards" element={<RoleRoute allowedRoles={['principal']}><ReportCardsSetupPage /></RoleRoute>} />
-      <Route path="/principal/report-cards/generate" element={<RoleRoute allowedRoles={['principal']}><GenerateReportCardPage /></RoleRoute>} />
-      <Route path="/principal/report-cards/class" element={<RoleRoute allowedRoles={['principal']}><ClassReportCardsPage /></RoleRoute>} />
-      <Route path="/principal/assignments" element={<RoleRoute allowedRoles={['principal']}><TeacherAssignmentsPage adminView /></RoleRoute>} />
-      <Route path="/principal/assignments/:id/submissions" element={<RoleRoute allowedRoles={['principal']}><AssignmentSubmissionsPage /></RoleRoute>} />
-      <Route path="/principal/ai/settings" element={<RoleRoute allowedRoles={['principal']}><AiSettingsPage /></RoleRoute>} />
-      <Route path="/principal/ai/logs" element={<RoleRoute allowedRoles={['principal']}><AiLogsPage /></RoleRoute>} />
-      <Route path="/principal/ai/syllabus" element={<RoleRoute allowedRoles={['principal']}><SyllabusUploadPage /></RoleRoute>} />
-      <Route path="/principal/ai/question-bank" element={<RoleRoute allowedRoles={['principal']}><QuestionBankPage /></RoleRoute>} />
-      <Route path="/principal/ai/exam-generator" element={<RoleRoute allowedRoles={['principal']}><ExamGeneratorPage /></RoleRoute>} />
-      <Route path="/principal/ai/exam-generator/new/build" element={<RoleRoute allowedRoles={['principal']}><ExamPaperBuilderPage /></RoleRoute>} />
-      <Route path="/principal/ai/exam-generator/:id/build" element={<RoleRoute allowedRoles={['principal']}><ExamPaperBuilderPage /></RoleRoute>} />
-      <Route path="/principal/ai/marking-scheme" element={<RoleRoute allowedRoles={['principal']}><MarkingSchemePage /></RoleRoute>} />
-      <Route path="/principal/ai/marking-scheme/:paperId" element={<RoleRoute allowedRoles={['principal']}><MarkingSchemePage /></RoleRoute>} />
-      <Route path="/principal/analytics" element={<RoleRoute allowedRoles={['principal']}><AcademicAnalyticsPage /></RoleRoute>} />
-      <Route path="/principal/analytics/weak-areas" element={<RoleRoute allowedRoles={['principal']}><WeakAreasPage /></RoleRoute>} />
-      <Route path="/principal/analytics/teachers" element={<RoleRoute allowedRoles={['principal']}><TeacherPerformancePage /></RoleRoute>} />
-      <Route path="/principal/integrations/qr-attendance" element={<RoleRoute allowedRoles={['principal']}><QrAttendancePage /></RoleRoute>} />
-      <Route path="/principal/integrations/notifications" element={<RoleRoute allowedRoles={['principal']}><NotificationsPage /></RoleRoute>} />
+      <Route path="/principal/dashboard" element={<RoleRoute allowedRoles={['school_administrator']}><PrincipalDashboard /></RoleRoute>} />
+      <Route path="/principal/academic-setup" element={<RoleRoute allowedRoles={['school_administrator']}><AcademicSetupPage /></RoleRoute>} />
+      <Route path="/principal/students" element={<RoleRoute allowedRoles={['school_administrator']}><StudentsPage /></RoleRoute>} />
+      <Route path="/principal/students/:id" element={<RoleRoute allowedRoles={['school_administrator']}><StudentProfilePage /></RoleRoute>} />
+      <Route path="/principal/parents" element={<RoleRoute allowedRoles={['school_administrator']}><ParentsPage /></RoleRoute>} />
+      <Route path="/principal/finance-staff" element={<RoleRoute allowedRoles={['school_administrator']}><FinanceStaffPage /></RoleRoute>} />
+      <Route path="/principal/teachers" element={<RoleRoute allowedRoles={['school_administrator']}><TeachersPage /></RoleRoute>} />
+      <Route path="/principal/classes" element={<RoleRoute allowedRoles={['school_administrator']}><AcademicPage key="classes" type="classes" title="Classes" /></RoleRoute>} />
+      <Route path="/principal/sections" element={<RoleRoute allowedRoles={['school_administrator']}><AcademicPage key="sections" type="sections" title="Sections" /></RoleRoute>} />
+      <Route path="/principal/subjects" element={<RoleRoute allowedRoles={['school_administrator']}><AcademicPage key="subjects" type="subjects" title="Subjects" /></RoleRoute>} />
+      <Route path="/principal/class-subjects" element={<RoleRoute allowedRoles={['school_administrator']}><ClassSubjectsPage /></RoleRoute>} />
+      <Route path="/principal/attendance" element={<RoleRoute allowedRoles={['school_administrator']}><AttendanceHubPage /></RoleRoute>} />
+      <Route path="/principal/attendance/mark" element={<RoleRoute allowedRoles={['school_administrator']}><AttendancePage canMark /></RoleRoute>} />
+      <Route path="/principal/attendance/calendar" element={<RoleRoute allowedRoles={['school_administrator']}><AttendanceCalendarPage /></RoleRoute>} />
+      <Route path="/principal/attendance/reports/class" element={<RoleRoute allowedRoles={['school_administrator']}><ClassAttendanceReportPage /></RoleRoute>} />
+      <Route path="/principal/attendance/reports/student" element={<RoleRoute allowedRoles={['school_administrator']}><StudentAttendanceReportPage /></RoleRoute>} />
+      <Route path="/principal/attendance/reports/absentees" element={<RoleRoute allowedRoles={['school_administrator']}><AbsenteeReportPage /></RoleRoute>} />
+      <Route path="/principal/attendance/reports/late" element={<RoleRoute allowedRoles={['school_administrator']}><LateArrivalReportPage /></RoleRoute>} />
+      <Route path="/principal/attendance/corrections" element={<RoleRoute allowedRoles={['school_administrator']}><AttendanceCorrectionRequestsPage /></RoleRoute>} />
+      <Route path="/principal/announcements" element={<RoleRoute allowedRoles={['school_administrator']}><AnnouncementsListPage /></RoleRoute>} />
+      <Route path="/principal/announcements/create" element={<RoleRoute allowedRoles={['school_administrator']}><CreateAnnouncementPage /></RoleRoute>} />
+      <Route path="/principal/announcements/:id" element={<RoleRoute allowedRoles={['school_administrator']}><AnnouncementDetailsPage /></RoleRoute>} />
+      <Route path="/principal/reports" element={<RoleRoute allowedRoles={['school_administrator']}><ReportsPage /></RoleRoute>} />
+      <Route path="/principal/timetable/setup" element={<RoleRoute allowedRoles={['school_administrator']}><TimetableSetupPage /></RoleRoute>} />
+      <Route path="/principal/timetable/periods" element={<RoleRoute allowedRoles={['school_administrator']}><PeriodManagementPage /></RoleRoute>} />
+      <Route path="/principal/timetable/class" element={<RoleRoute allowedRoles={['school_administrator']}><ClassTimetablePage /></RoleRoute>} />
+      <Route path="/principal/timetable/teacher" element={<RoleRoute allowedRoles={['school_administrator']}><TeacherTimetablePage adminView /></RoleRoute>} />
+      <Route path="/principal/timetable/conflicts" element={<RoleRoute allowedRoles={['school_administrator']}><ConflictCheckerPage /></RoleRoute>} />
+      <Route path="/principal/exams/setup" element={<RoleRoute allowedRoles={['school_administrator']}><ExamSetupPage /></RoleRoute>} />
+      <Route path="/principal/exams/types" element={<RoleRoute allowedRoles={['school_administrator']}><ExamTypesPage /></RoleRoute>} />
+      <Route path="/principal/exams/list" element={<RoleRoute allowedRoles={['school_administrator']}><ExamsPage /></RoleRoute>} />
+      <Route path="/principal/exams/:examId/schedule" element={<RoleRoute allowedRoles={['school_administrator']}><ExamSchedulePage /></RoleRoute>} />
+      <Route path="/principal/exams/calendar" element={<RoleRoute allowedRoles={['school_administrator']}><ExamCalendarPage /></RoleRoute>} />
+      <Route path="/principal/exams/published" element={<RoleRoute allowedRoles={['school_administrator']}><PublishedExamsPage /></RoleRoute>} />
+      <Route path="/principal/results" element={<RoleRoute allowedRoles={['school_administrator']}><ClassReportCardsPage /></RoleRoute>} />
+      <Route path="/principal/report-cards" element={<RoleRoute allowedRoles={['school_administrator']}><ReportCardsSetupPage /></RoleRoute>} />
+      <Route path="/principal/report-cards/generate" element={<RoleRoute allowedRoles={['school_administrator']}><GenerateReportCardPage /></RoleRoute>} />
+      <Route path="/principal/report-cards/class" element={<RoleRoute allowedRoles={['school_administrator']}><ClassReportCardsPage /></RoleRoute>} />
+      <Route path="/principal/assignments" element={<RoleRoute allowedRoles={['school_administrator']}><TeacherAssignmentsPage adminView /></RoleRoute>} />
+      <Route path="/principal/assignments/:id/submissions" element={<RoleRoute allowedRoles={['school_administrator']}><AssignmentSubmissionsPage /></RoleRoute>} />
+      <Route path="/principal/ai/settings" element={<RoleRoute allowedRoles={['school_administrator']}><AiSettingsPage /></RoleRoute>} />
+      <Route path="/principal/ai/logs" element={<RoleRoute allowedRoles={['school_administrator']}><AiLogsPage /></RoleRoute>} />
+      <Route path="/principal/ai/syllabus" element={<RoleRoute allowedRoles={['school_administrator']}><SyllabusUploadPage /></RoleRoute>} />
+      <Route path="/principal/ai/question-bank" element={<RoleRoute allowedRoles={['school_administrator']}><QuestionBankPage /></RoleRoute>} />
+      <Route path="/principal/ai/exam-generator" element={<RoleRoute allowedRoles={['school_administrator']}><ExamGeneratorPage /></RoleRoute>} />
+      <Route path="/principal/ai/exam-generator/new/build" element={<RoleRoute allowedRoles={['school_administrator']}><ExamPaperBuilderPage /></RoleRoute>} />
+      <Route path="/principal/ai/exam-generator/:id/build" element={<RoleRoute allowedRoles={['school_administrator']}><ExamPaperBuilderPage /></RoleRoute>} />
+      <Route path="/principal/ai/marking-scheme" element={<RoleRoute allowedRoles={['school_administrator']}><MarkingSchemePage /></RoleRoute>} />
+      <Route path="/principal/ai/marking-scheme/:paperId" element={<RoleRoute allowedRoles={['school_administrator']}><MarkingSchemePage /></RoleRoute>} />
+      <Route path="/principal/analytics" element={<RoleRoute allowedRoles={['school_administrator']}><AcademicAnalyticsPage /></RoleRoute>} />
+      <Route path="/principal/analytics/weak-areas" element={<RoleRoute allowedRoles={['school_administrator']}><WeakAreasPage /></RoleRoute>} />
+      <Route path="/principal/analytics/teachers" element={<RoleRoute allowedRoles={['school_administrator']}><TeacherPerformancePage /></RoleRoute>} />
+      <Route path="/principal/integrations/qr-attendance" element={<RoleRoute allowedRoles={['school_administrator']}><QrAttendancePage /></RoleRoute>} />
+      <Route path="/principal/integrations/notifications" element={<RoleRoute allowedRoles={['school_administrator']}><NotificationsPage /></RoleRoute>} />
+
+      <Route path="/principal-portal/dashboard" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalDashboard /></RoleRoute>} />
+      <Route path="/principal-portal/students" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalStudentsPage /></RoleRoute>} />
+      <Route path="/principal-portal/students/:id" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalStudentProfilePage /></RoleRoute>} />
+      <Route path="/principal-portal/teachers" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalTeachersPage /></RoleRoute>} />
+      <Route path="/principal-portal/teachers/:id" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalTeacherProfilePage /></RoleRoute>} />
+      <Route path="/principal-portal/classes" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalClassesPage /></RoleRoute>} />
+      <Route path="/principal-portal/attendance" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalAttendancePage /></RoleRoute>} />
+      <Route path="/principal-portal/exams" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalExamsPage /></RoleRoute>} />
+      <Route path="/principal-portal/results" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalResultsPage /></RoleRoute>} />
+      <Route path="/principal-portal/timetable" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalTimetablePage /></RoleRoute>} />
+      <Route path="/principal-portal/timetable/class" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalClassTimetablePage /></RoleRoute>} />
+      <Route path="/principal-portal/timetable/teacher" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalTeacherTimetablePage /></RoleRoute>} />
+      <Route path="/principal-portal/timetable/conflicts" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalConflictPage /></RoleRoute>} />
+      <Route path="/principal-portal/fees" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalFeesPage /></RoleRoute>} />
+      <Route path="/principal-portal/announcements" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalAnnouncementsPage /></RoleRoute>} />
+      <Route path="/principal-portal/announcements/create" element={<RoleRoute allowedRoles={['principal']}><CreateAnnouncementPage /></RoleRoute>} />
+      <Route path="/principal-portal/announcements/:id" element={<RoleRoute allowedRoles={['principal']}><AnnouncementDetailsPage /></RoleRoute>} />
+      <Route path="/principal-portal/parents" element={<RoleRoute allowedRoles={['principal']}><PrincipalPortalParentsPage /></RoleRoute>} />
 
       <Route path="/admin/dashboard" element={<RoleRoute allowedRoles={['admin']}><PrincipalDashboard /></RoleRoute>} />
       <Route path="/admin/academic-setup" element={<RoleRoute allowedRoles={['admin']}><AcademicSetupPage /></RoleRoute>} />
@@ -244,9 +244,9 @@ export default function App() {
       <Route path="/admin/parents" element={<RoleRoute allowedRoles={['admin']}><ParentsPage /></RoleRoute>} />
       <Route path="/admin/finance-staff" element={<RoleRoute allowedRoles={['admin']}><FinanceStaffPage /></RoleRoute>} />
       <Route path="/admin/teachers" element={<RoleRoute allowedRoles={['admin']}><TeachersPage /></RoleRoute>} />
-      <Route path="/admin/classes" element={<RoleRoute allowedRoles={['admin']}><AcademicPage type="classes" title="Classes" /></RoleRoute>} />
-      <Route path="/admin/sections" element={<RoleRoute allowedRoles={['admin']}><AcademicPage type="sections" title="Sections" /></RoleRoute>} />
-      <Route path="/admin/subjects" element={<RoleRoute allowedRoles={['admin']}><AcademicPage type="subjects" title="Subjects" /></RoleRoute>} />
+      <Route path="/admin/classes" element={<RoleRoute allowedRoles={['admin']}><AcademicPage key="classes" type="classes" title="Classes" /></RoleRoute>} />
+      <Route path="/admin/sections" element={<RoleRoute allowedRoles={['admin']}><AcademicPage key="sections" type="sections" title="Sections" /></RoleRoute>} />
+      <Route path="/admin/subjects" element={<RoleRoute allowedRoles={['admin']}><AcademicPage key="subjects" type="subjects" title="Subjects" /></RoleRoute>} />
       <Route path="/admin/class-subjects" element={<RoleRoute allowedRoles={['admin']}><ClassSubjectsPage /></RoleRoute>} />
       <Route path="/admin/attendance" element={<RoleRoute allowedRoles={['admin']}><AttendanceHubPage /></RoleRoute>} />
       <Route path="/admin/attendance/mark" element={<RoleRoute allowedRoles={['admin']}><AttendancePage canMark /></RoleRoute>} />
@@ -368,7 +368,8 @@ export default function App() {
       <Route path="/parent/messages" element={<RoleRoute allowedRoles={['parent']}><ParentMessagesPage /></RoleRoute>} />
       <Route path="/parent/messages/thread/:userId" element={<RoleRoute allowedRoles={['parent']}><MessageThreadPage /></RoleRoute>} />
 
-      <Route path="/finance/dashboard" element={<RoleRoute allowedRoles={['finance_manager', 'owner']}><FinanceDashboard /></RoleRoute>} />
+      <Route path="/finance/dashboard" element={<RoleRoute allowedRoles={['finance_manager']}><FinanceDashboard /></RoleRoute>} />
+      <Route path="/finance/new-student-fees" element={<RoleRoute allowedRoles={['finance_manager']}><NewStudentFeeSetupPage /></RoleRoute>} />
       <Route path="/finance/fee-structures" element={<RoleRoute allowedRoles={['finance_manager']}><FeeStructuresPage /></RoleRoute>} />
       <Route path="/finance/challans" element={<RoleRoute allowedRoles={['finance_manager']}><ChallansPage /></RoleRoute>} />
       <Route path="/finance/bulk-generate" element={<RoleRoute allowedRoles={['finance_manager']}><BulkChallanGenerationPage /></RoleRoute>} />
@@ -377,13 +378,13 @@ export default function App() {
       <Route path="/finance/defaulters" element={<RoleRoute allowedRoles={['finance_manager']}><DefaultersPage /></RoleRoute>} />
       <Route path="/finance/collection-reports" element={<RoleRoute allowedRoles={['finance_manager']}><FinanceCollectionReportsPage /></RoleRoute>} />
       <Route path="/finance/reports" element={<RoleRoute allowedRoles={['finance_manager']}><FinanceCollectionReportsPage /></RoleRoute>} />
-      <Route path="/finance/sms" element={<RoleRoute allowedRoles={['finance_manager', 'owner', 'principal']}><SmsPage /></RoleRoute>} />
-      <Route path="/finance/sms/dashboard" element={<RoleRoute allowedRoles={['finance_manager', 'owner', 'principal']}><SmsDashboardPage /></RoleRoute>} />
-      <Route path="/finance/sms/templates" element={<RoleRoute allowedRoles={['finance_manager', 'owner', 'principal']}><SmsTemplatesPage /></RoleRoute>} />
-      <Route path="/finance/sms/logs" element={<RoleRoute allowedRoles={['finance_manager', 'owner', 'principal']}><SmsLogsPage /></RoleRoute>} />
-      <Route path="/finance/sms/fee-reminder" element={<RoleRoute allowedRoles={['finance_manager', 'owner', 'principal']}><SmsFeeReminderPage /></RoleRoute>} />
-      <Route path="/finance/sms/attendance-alert" element={<RoleRoute allowedRoles={['finance_manager', 'owner', 'principal']}><SmsAttendanceAlertPage /></RoleRoute>} />
-      <Route path="/finance/sms/exam-notice" element={<RoleRoute allowedRoles={['finance_manager', 'owner', 'principal']}><SmsExamNoticePage /></RoleRoute>} />
+      <Route path="/finance/sms" element={<RoleRoute allowedRoles={['finance_manager', 'school_administrator']}><SmsPage /></RoleRoute>} />
+      <Route path="/finance/sms/dashboard" element={<RoleRoute allowedRoles={['finance_manager', 'school_administrator']}><SmsDashboardPage /></RoleRoute>} />
+      <Route path="/finance/sms/templates" element={<RoleRoute allowedRoles={['finance_manager', 'school_administrator']}><SmsTemplatesPage /></RoleRoute>} />
+      <Route path="/finance/sms/logs" element={<RoleRoute allowedRoles={['finance_manager', 'school_administrator']}><SmsLogsPage /></RoleRoute>} />
+      <Route path="/finance/sms/fee-reminder" element={<RoleRoute allowedRoles={['finance_manager', 'school_administrator']}><SmsFeeReminderPage /></RoleRoute>} />
+      <Route path="/finance/sms/attendance-alert" element={<RoleRoute allowedRoles={['finance_manager', 'school_administrator']}><SmsAttendanceAlertPage /></RoleRoute>} />
+      <Route path="/finance/sms/exam-notice" element={<RoleRoute allowedRoles={['finance_manager', 'school_administrator']}><SmsExamNoticePage /></RoleRoute>} />
 
       <Route path="*" element={<RoleRedirect />} />
     </Routes>

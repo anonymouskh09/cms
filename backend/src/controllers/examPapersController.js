@@ -24,7 +24,7 @@ const {
   UPLOAD_DIR,
 } = require('../utils/examPaperPdfGenerator');
 
-const WRITER_ROLES = ['owner', 'principal', 'admin', 'teacher'];
+const WRITER_ROLES = ['owner', 'school_administrator', 'admin', 'teacher'];
 const VIEWER_ROLES = [...WRITER_ROLES, 'student', 'parent'];
 
 const PAPER_SELECT = `

@@ -5,7 +5,8 @@ const AuthContext = createContext(null);
 
 const ROLE_ROUTES = {
   owner: '/owner/dashboard',
-  principal: '/principal/dashboard',
+  school_administrator: '/principal/dashboard',
+  principal: '/principal-portal/dashboard',
   admin: '/admin/dashboard',
   teacher: '/teacher/dashboard',
   student: '/student/dashboard',

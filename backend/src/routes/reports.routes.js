@@ -5,7 +5,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 const institutionScopeMiddleware = require('../middleware/institutionScopeMiddleware');
 
 const router = express.Router();
-router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'principal', 'admin', 'finance_manager']));
+router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'school_administrator', 'admin', 'finance_manager']));
 router.get('/students', ctrl.studentsReport);
 router.get('/teachers', ctrl.teachersReport);
 router.get('/attendance/daily', ctrl.attendanceDaily);

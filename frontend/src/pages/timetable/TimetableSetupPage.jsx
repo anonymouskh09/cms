@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function TimetableSetupPage() {
   const { user } = useAuth();
-  const base = `/${user.role === 'owner' ? 'owner' : user.role === 'admin' ? 'admin' : 'principal'}`;
+  const base = `/${user.role === 'owner' ? 'owner' : user.role === 'admin' ? 'admin' : user.role === 'school_administrator' ? 'principal' : user.role === 'principal' ? 'principal-portal' : 'principal'}`;
 
   const links = [
     { title: 'Period Management', desc: 'Create and manage school periods / time slots', path: `${base}/timetable/periods` },

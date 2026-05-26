@@ -3,7 +3,7 @@ const pool = require('../config/db');
 const { buildInstitutionWhere } = require('../middleware/institutionScopeMiddleware');
 const { logAudit } = require('../utils/auditLog');
 
-const MANAGE_ROLES = ['owner', 'principal', 'admin'];
+const MANAGE_ROLES = ['owner', 'school_administrator', 'admin'];
 
 function resolveInstitutionId(req) {
   if (req.user.role === 'owner') {

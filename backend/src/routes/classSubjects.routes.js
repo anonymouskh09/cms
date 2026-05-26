@@ -5,11 +5,14 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 const institutionScopeMiddleware = require('../middleware/institutionScopeMiddleware');
 
 const router = express.Router();
-router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'principal', 'admin']));
-router.get('/', ctrl.listAll);
-router.get('/class/:classId', ctrl.listByClass);
-router.post('/bulk', ctrl.assignBulk);
-router.post('/', ctrl.assign);
-router.delete('/:id', ctrl.remove);
+const manage = roleMiddleware(['owner', 'school_administrator', 'admin']);
+const view = roleMiddleware(['owner', 'school_administrator', 'admin', 'principal']);
+
+router.use(authMiddleware, institutionScopeMiddleware);
+router.get('/', view, ctrl.listAll);
+router.get('/class/:classId', view, ctrl.listByClass);
+router.post('/bulk', manage, ctrl.assignBulk);
+router.post('/', manage, ctrl.assign);
+router.delete('/:id', manage, ctrl.remove);
 
 module.exports = router;

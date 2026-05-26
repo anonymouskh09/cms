@@ -12,7 +12,7 @@ const view = roleMiddleware(ctrl.VIEW_ROLES);
 router.use(authMiddleware, institutionScopeMiddleware);
 
 router.get('/student/me', roleMiddleware(['student']), ctrl.getStudentMe);
-router.get('/parent/child/:studentId', roleMiddleware(['parent', 'owner', 'principal', 'admin']), ctrl.getParentChild);
+router.get('/parent/child/:studentId', roleMiddleware(['parent', 'owner', 'school_administrator', 'admin']), ctrl.getParentChild);
 
 router.put('/submissions/:id/grade', teacher, ctrl.gradeSubmission);
 

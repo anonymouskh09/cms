@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import KpiCard, { KpiGrid, DashboardHeader } from '../../components/dashboard/KpiCard';
 import DashboardCard from '../../components/dashboard/DashboardCard';
@@ -23,8 +24,14 @@ function formatRs(n) {
 }
 
 export default function PrincipalDashboard() {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const badge = user?.role === 'school_administrator'
+    ? 'School Administrator Portal'
+    : user?.role === 'admin'
+      ? 'Admin Portal'
+      : 'Dashboard';
 
   useEffect(() => {
     dashboardService.principal().then((res) => setData(res.data.data)).finally(() => setLoading(false));
@@ -35,7 +42,7 @@ export default function PrincipalDashboard() {
   return (
     <DashboardLayout>
       <DashboardHeader
-        badge="Principal Portal"
+        badge={badge}
         title="School Overview"
         subtitle="Key metrics for your campus today"
         action={

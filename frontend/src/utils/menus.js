@@ -2,31 +2,19 @@ const MENUS = {
   owner: [
     { label: 'Dashboard', path: '/owner/dashboard', exact: true },
     { label: 'Institutions', path: '/owner/institutions' },
-    { label: 'Users', path: '/owner/users' },
-    { label: 'Academic Setup', path: '/owner/academic-setup' },
     { label: 'Students', path: '/owner/students' },
     { label: 'Parents', path: '/owner/parents' },
     { label: 'Teachers', path: '/owner/teachers' },
     { label: 'Classes', path: '/owner/classes' },
-    { label: 'Sections', path: '/owner/sections' },
-    { label: 'Subjects', path: '/owner/subjects' },
-    { label: 'Class Subjects', path: '/owner/class-subjects' },
     { label: 'Attendance', path: '/owner/attendance' },
-    { label: 'Timetable', path: '/owner/timetable/setup' },
-    { label: 'Exams', path: '/owner/exams/setup' },
+    { label: 'Exams', path: '/owner/exams' },
     { label: 'Results', path: '/owner/results' },
-    { label: 'Report Cards', path: '/owner/report-cards' },
-    { label: 'Finance', path: '/finance/dashboard' },
+    { label: 'Timetable', path: '/owner/timetable/class' },
+    { label: 'Fees Overview', path: '/owner/fees' },
     { label: 'Announcements', path: '/owner/announcements' },
-    { label: 'SMS UI', path: '/finance/sms/dashboard' },
-    { label: 'AI Tools', path: '/owner/ai/settings' },
     { label: 'Analytics', path: '/owner/analytics' },
-    { label: 'Integrations', path: '/owner/integrations/qr-attendance' },
-    { label: 'System', path: '/owner/system/health' },
-    { label: 'Reports', path: '/owner/reports' },
-    { label: 'Settings', path: '/owner/settings' },
   ],
-  principal: [
+  school_administrator: [
     { label: 'Dashboard', path: '/principal/dashboard', exact: true },
     { label: 'Academic Setup', path: '/principal/academic-setup' },
     { label: 'Students', path: '/principal/students' },
@@ -49,6 +37,19 @@ const MENUS = {
     { label: 'AI Tools', path: '/principal/ai/settings' },
     { label: 'Analytics', path: '/principal/analytics' },
     { label: 'Integrations', path: '/principal/integrations/qr-attendance' },
+  ],
+  principal: [
+    { label: 'Dashboard', path: '/principal-portal/dashboard', exact: true },
+    { label: 'Students', path: '/principal-portal/students' },
+    { label: 'Teachers', path: '/principal-portal/teachers' },
+    { label: 'Classes', path: '/principal-portal/classes' },
+    { label: 'Attendance', path: '/principal-portal/attendance' },
+    { label: 'Exams', path: '/principal-portal/exams' },
+    { label: 'Results', path: '/principal-portal/results' },
+    { label: 'Timetable', path: '/principal-portal/timetable/class' },
+    { label: 'Fees Overview', path: '/principal-portal/fees' },
+    { label: 'Announcements', path: '/principal-portal/announcements' },
+    { label: 'Parent', path: '/principal-portal/parents' },
   ],
   admin: [
     { label: 'Dashboard', path: '/admin/dashboard', exact: true },
@@ -114,6 +115,7 @@ const MENUS = {
   ],
   finance_manager: [
     { label: 'Dashboard', path: '/finance/dashboard', exact: true },
+    { label: 'New Student Fee Setup', path: '/finance/new-student-fees' },
     { label: 'Fee Structures', path: '/finance/fee-structures' },
     { label: 'Challans', path: '/finance/challans' },
     { label: 'Payments', path: '/finance/payments' },
@@ -126,10 +128,13 @@ const MENUS = {
 /** Paths each role may access (prefix match). Used to block direct URL access outside the menu. */
 const ROLE_ROUTE_PREFIXES = {
   owner: [
-    '/owner', '/finance/dashboard', '/finance/sms',
+    '/owner',
+  ],
+  school_administrator: [
+    '/principal', '/finance/sms',
   ],
   principal: [
-    '/principal', '/finance/sms',
+    '/principal-portal',
   ],
   admin: [
     '/admin',

@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { fetchActiveStudent } = require('../utils/resolveActiveStudent');
 const { buildInstitutionWhere } = require('../middleware/institutionScopeMiddleware');
 
 async function ownerDashboard(req, res, next) {
@@ -103,6 +104,140 @@ async function principalDashboard(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function principalPortalDashboard(req, res, next) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const monthYear = today.slice(0, 7);
+    const instId = req.user.institution_id;
+
+    const [[{ total_students }]] = await pool.query('SELECT COUNT(*) AS total_students FROM students WHERE institution_id=? AND status=?', [instId, 'active']);
+    const [[{ total_teachers }]] = await pool.query('SELECT COUNT(*) AS total_teachers FROM teachers WHERE institution_id=? AND status=?', [instId, 'active']);
+    const [[{ total_classes }]] = await pool.query('SELECT COUNT(*) AS total_classes FROM classes WHERE institution_id=? AND status=?', [instId, 'active']);
+    const [[{ absent_students_today }]] = await pool.query(
+      `SELECT COUNT(*) AS absent_students_today FROM attendance WHERE institution_id=? AND attendance_date=? AND status='absent'`,
+      [instId, today]
+    );
+    const [[{ present_students_today }]] = await pool.query(
+      `SELECT COUNT(*) AS present_students_today FROM attendance WHERE institution_id=? AND attendance_date=? AND status='present'`,
+      [instId, today]
+    );
+    const [[{ late_students_today }]] = await pool.query(
+      `SELECT COUNT(*) AS late_students_today FROM attendance WHERE institution_id=? AND attendance_date=? AND status='late'`,
+      [instId, today]
+    );
+    const studentMarked = present_students_today + absent_students_today + late_students_today;
+    const student_attendance_pct = studentMarked
+      ? Math.round((present_students_today / studentMarked) * 100)
+      : 0;
+
+    const [[{ pending_results }]] = await pool.query(
+      `SELECT COUNT(DISTINCT exam_id) AS pending_results FROM exam_results WHERE institution_id=? AND status='draft'`,
+      [instId]
+    );
+    const [[{ pending_exams }]] = await pool.query(
+      `SELECT COUNT(*) AS pending_exams FROM exams WHERE institution_id=? AND status='draft'`,
+      [instId]
+    );
+    const [[{ upcoming_exams }]] = await pool.query(
+      `SELECT COUNT(*) AS upcoming_exams FROM exams WHERE institution_id=? AND status IN ('draft','published') AND start_date >= ?`,
+      [instId, today]
+    );
+    const [[{ defaulter_count }]] = await pool.query(
+      `SELECT COUNT(DISTINCT student_id) AS defaulter_count FROM challans WHERE institution_id=? AND status IN ('pending','overdue')`,
+      [instId]
+    );
+    const [[{ total_expected_fees }]] = await pool.query(
+      `SELECT COALESCE(SUM(total_amount),0) AS total_expected_fees FROM challans WHERE institution_id=? AND month_year=?`,
+      [instId, monthYear]
+    );
+    const [[{ total_collected_fees }]] = await pool.query(
+      `SELECT COALESCE(SUM(total_amount),0) AS total_collected_fees FROM challans WHERE institution_id=? AND status='paid' AND month_year=?`,
+      [instId, monthYear]
+    );
+    const [[{ pending_fees }]] = await pool.query(
+      `SELECT COALESCE(SUM(total_amount),0) AS pending_fees FROM challans WHERE institution_id=? AND status IN ('pending','overdue')`,
+      [instId]
+    );
+    const fee_collection_pct = total_expected_fees
+      ? Math.round((total_collected_fees / total_expected_fees) * 100)
+      : 0;
+
+    const [[{ unread_messages }]] = await pool.query(
+      `SELECT COUNT(*) AS unread_messages FROM messages WHERE institution_id=? AND is_read=0`,
+      [instId]
+    );
+    let pending_meetings = 0;
+    try {
+      const [[row]] = await pool.query(
+        `SELECT COUNT(*) AS pending_meetings FROM parent_meeting_requests WHERE institution_id=? AND status='pending'`,
+        [instId]
+      );
+      pending_meetings = row?.pending_meetings || 0;
+    } catch { /* table may not exist before migration */ }
+
+    const [recent_announcements] = await pool.query(
+      'SELECT id, title, created_at FROM announcements WHERE institution_id=? ORDER BY created_at DESC LIMIT 5',
+      [instId]
+    );
+    const [class_attendance] = await pool.query(
+      `SELECT c.name AS class_name, COUNT(a.id) AS total,
+              SUM(CASE WHEN a.status='present' THEN 1 ELSE 0 END) AS present
+       FROM attendance a
+       JOIN classes c ON c.id = a.class_id
+       WHERE a.institution_id=? AND a.attendance_date=?
+       GROUP BY c.id, c.name ORDER BY c.name LIMIT 10`,
+      [instId, today]
+    );
+    const [repeated_absentees] = await pool.query(
+      `SELECT s.id, s.first_name, s.last_name, s.roll_no, COUNT(*) AS absent_days
+       FROM attendance a JOIN students s ON s.id = a.student_id
+       WHERE a.institution_id=? AND a.status='absent' AND a.attendance_date >= DATE_SUB(?, INTERVAL 7 DAY)
+       GROUP BY s.id HAVING absent_days >= 3 ORDER BY absent_days DESC LIMIT 10`,
+      [instId, today]
+    );
+    let pending_approvals = [];
+    try {
+      const [rows] = await pool.query(
+        `SELECT approval_type, COUNT(*) AS count FROM principal_approvals
+         WHERE institution_id=? AND status='pending' GROUP BY approval_type`,
+        [instId]
+      );
+      pending_approvals = rows;
+    } catch { /* optional */ }
+
+    res.json({
+      success: true,
+      data: {
+        total_students,
+        total_teachers,
+        total_classes,
+        student_attendance_pct,
+        teacher_attendance_pct: 0,
+        absent_students_today,
+        absent_teachers_today: 0,
+        late_students_today,
+        upcoming_exams,
+        pending_exams,
+        pending_results,
+        pending_fees,
+        fee_collection_pct,
+        defaulter_count,
+        total_expected_fees,
+        total_collected_fees,
+        unread_messages,
+        pending_meetings,
+        recent_announcements,
+        class_attendance: class_attendance.map((r) => ({
+          class_name: r.class_name,
+          pct: r.total ? Math.round((r.present / r.total) * 100) : 0,
+        })),
+        repeated_absentees,
+        pending_approvals,
+      },
+    });
+  } catch (err) { next(err); }
+}
+
 async function teacherDashboard(req, res, next) {
   try {
     const instId = req.user.institution_id;
@@ -182,30 +317,32 @@ async function financeDashboard(req, res, next) {
     const instId = req.user.institution_id;
     const monthYear = new Date().toISOString().slice(0, 7);
     const [[{ collected_month }]] = await pool.query(`SELECT COALESCE(SUM(total_amount),0) AS collected_month FROM challans WHERE institution_id=? AND status='paid' AND month_year=?`, [instId, monthYear]);
-    const [[{ total_pending }]] = await pool.query(`SELECT COALESCE(SUM(total_amount),0) AS total_pending FROM challans WHERE institution_id=? AND status='pending'`, [instId]);
+    const [[{ total_pending }]] = await pool.query(
+      `SELECT COALESCE(SUM(total_amount - amount_paid),0) AS total_pending FROM challans WHERE institution_id=? AND status IN ('pending','partial')`,
+      [instId]
+    );
     const [[{ overdue_amount }]] = await pool.query(`SELECT COALESCE(SUM(total_amount),0) AS overdue_amount FROM challans WHERE institution_id=? AND status='overdue'`, [instId]);
     const [[{ defaulter_count }]] = await pool.query(`SELECT COUNT(DISTINCT student_id) AS defaulter_count FROM challans WHERE institution_id=? AND status IN ('pending','overdue')`, [instId]);
     const [[{ challans_generated }]] = await pool.query(`SELECT COUNT(*) AS challans_generated FROM challans WHERE institution_id=? AND month_year=?`, [instId, monthYear]);
+    const [[{ pending_fee_setups }]] = await pool.query(
+      `SELECT COUNT(*) AS pending_fee_setups FROM student_fee_profiles WHERE institution_id=? AND status='pending'`,
+      [instId]
+    );
 
     res.json({
       success: true,
-      data: { collected_month, total_pending, overdue_amount, defaulter_count, challans_generated },
+      data: { collected_month, total_pending, overdue_amount, defaulter_count, challans_generated, pending_fee_setups },
     });
   } catch (err) { next(err); }
 }
 
 async function studentDashboard(req, res, next) {
   try {
-    const [students] = await pool.query(
-      `SELECT s.*, c.name AS class_name, sec.name AS section_name
-       FROM students s
-       LEFT JOIN classes c ON s.class_id = c.id
-       LEFT JOIN sections sec ON s.section_id = sec.id
-       WHERE s.user_id = ?`,
-      [req.user.user_id]
-    );
-    if (!students.length) return res.json({ success: true, data: {} });
-    const student = students[0];
+    const student = await fetchActiveStudent(pool, req.user.user_id, {
+      select: 's.*, c.name AS class_name, sec.name AS section_name',
+      joins: 'LEFT JOIN classes c ON c.id = s.class_id LEFT JOIN sections sec ON sec.id = s.section_id',
+    });
+    if (!student) return res.json({ success: true, data: {} });
     const monthYear = new Date().toISOString().slice(0, 7);
     const [attendance] = await pool.query(`SELECT status, COUNT(*) AS count FROM attendance WHERE student_id=? AND DATE_FORMAT(attendance_date,'%Y-%m')=? GROUP BY status`, [student.id, monthYear]);
     const total = attendance.reduce((s, r) => s + r.count, 0);
@@ -383,6 +520,7 @@ async function parentDashboard(req, res, next) {
 module.exports = {
   ownerDashboard,
   principalDashboard,
+  principalPortalDashboard,
   financeDashboard,
   studentDashboard,
   parentDashboard,

@@ -13,6 +13,8 @@ router.post('/fee-structures', roleMiddleware(['owner', 'finance_manager', 'admi
 
 router.get('/challans/generation-logs', roleMiddleware(['owner', 'finance_manager', 'admin', 'principal']), ext.generationLogs);
 router.post('/challans/bulk-generate', roleMiddleware(['owner', 'finance_manager', 'admin']), ext.bulkGenerate);
+router.post('/challans/generate-next-month', roleMiddleware(['owner', 'finance_manager', 'admin']), ext.bulkGenerateActiveProfiles);
+router.get('/challans/active-profiles-count', roleMiddleware(['owner', 'finance_manager', 'admin']), ext.countActiveProfiles);
 router.get('/challans', ctrl.listChallans);
 router.post('/challans/generate', roleMiddleware(['owner', 'finance_manager', 'admin']), ctrl.generateChallan);
 router.post('/challans/generate-monthly', roleMiddleware(['owner', 'finance_manager', 'admin']), ext.bulkGenerate);

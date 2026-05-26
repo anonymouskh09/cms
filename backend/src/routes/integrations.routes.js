@@ -5,7 +5,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 const institutionScopeMiddleware = require('../middleware/institutionScopeMiddleware');
 
 const router = express.Router();
-router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'principal', 'admin']));
+router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'school_administrator', 'admin']));
 
 router.get('/qr-attendance', ctrl.qrAttendanceStatus);
 router.get('/notifications', ctrl.notificationsStatus);

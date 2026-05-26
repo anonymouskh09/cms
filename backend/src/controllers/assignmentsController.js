@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 
-const MANAGE_ROLES = ['owner', 'principal', 'admin'];
+const MANAGE_ROLES = ['owner', 'school_administrator', 'admin'];
 const TEACHER_ROLES = ['teacher', ...MANAGE_ROLES];
 const VIEW_ROLES = [...TEACHER_ROLES, 'student', 'parent'];
 

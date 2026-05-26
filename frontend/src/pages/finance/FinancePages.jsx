@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Card, Button, Input, Select, Table, Badge, Modal, Alert, Spinner } from '../../components/ui';
-import { financeService, academicService, studentsService } from '../../services/authService';
+import { financeService, academicService } from '../../services/authService';
 import ChallanStatusBadge from '../../components/finance/ChallanStatusBadge';
-import StudentFeeSummary from '../../components/finance/StudentFeeSummary';
 import SmsActionButton from '../../components/sms/SmsActionButton';
 
 export function FeeStructuresPage() {
@@ -58,107 +58,15 @@ export function ChallansPage() {
   const [classes, setClasses] = useState([]);
   const [sections, setSections] = useState([]);
   const [filters, setFilters] = useState({ status: '', month_year: '', class_id: '', section_id: '' });
-  const [modal, setModal] = useState(false);
   const [cancelModal, setCancelModal] = useState(null);
+  const [payModal, setPayModal] = useState(null);
+  const [payAmount, setPayAmount] = useState('');
+  const [payMethod, setPayMethod] = useState('cash');
   const [cancelReason, setCancelReason] = useState('');
-  const [form, setForm] = useState({});
-  const [admissionInput, setAdmissionInput] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [feeData, setFeeData] = useState(null);
-  const [feeLoading, setFeeLoading] = useState(false);
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupErr, setLookupErr] = useState('');
-  const lookupTimer = useRef(null);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-
-  const openGenerateModal = () => {
-    setForm({ month_year: new Date().toISOString().slice(0, 7) });
-    setAdmissionInput('');
-    setSelectedStudent(null);
-    setFeeData(null);
-    setLookupErr('');
-    setModal(true);
-  };
-
-  const loadFeeData = useCallback(async (studentId, monthYear) => {
-    if (!studentId) {
-      setFeeData(null);
-      return;
-    }
-    setFeeLoading(true);
-    try {
-      const res = await financeService.payments.listStudent(studentId, { month_year: monthYear });
-      setFeeData(res.data.data);
-    } catch {
-      setFeeData(null);
-    } finally {
-      setFeeLoading(false);
-    }
-  }, []);
-
-  const lookupStudent = useCallback(async (query) => {
-    const q = String(query || '').trim();
-    if (!q) {
-      setSelectedStudent(null);
-      setForm((f) => ({ ...f, student_id: '' }));
-      setLookupErr('');
-      return;
-    }
-    setLookupLoading(true);
-    setLookupErr('');
-    try {
-      const res = await studentsService.list({ search: q, limit: 15, status: 'active' });
-      const rows = res.data.data || [];
-      const qLower = q.toLowerCase();
-      const exact = rows.find(
-        (s) =>
-          String(s.admission_no || '').toLowerCase() === qLower
-          || String(s.roll_no || '').toLowerCase() === qLower
-          || String(s.student_code || '').toLowerCase() === qLower
-      );
-      const student = exact || (rows.length === 1 ? rows[0] : null);
-      if (student) {
-        setSelectedStudent(student);
-        setForm((f) => ({ ...f, student_id: student.id, month_year: f.month_year || new Date().toISOString().slice(0, 7) }));
-        setLookupErr('');
-        const month = new Date().toISOString().slice(0, 7);
-        loadFeeData(student.id, month);
-      } else if (rows.length > 1) {
-        setSelectedStudent(null);
-        setForm((f) => ({ ...f, student_id: '' }));
-        setLookupErr('Multiple students match — enter the full admission number');
-      } else {
-        setSelectedStudent(null);
-        setForm((f) => ({ ...f, student_id: '' }));
-        setLookupErr('No student found with this admission number');
-      }
-    } catch {
-      setSelectedStudent(null);
-      setForm((f) => ({ ...f, student_id: '' }));
-      setLookupErr('Could not search student');
-    } finally {
-      setLookupLoading(false);
-    }
-  }, [loadFeeData]);
-
-  useEffect(() => {
-    if (form.student_id && form.month_year) {
-      loadFeeData(form.student_id, form.month_year);
-    }
-  }, [form.student_id, form.month_year, loadFeeData]);
-
-  const onAdmissionChange = (value) => {
-    setAdmissionInput(value);
-    setSelectedStudent(null);
-    setFeeData(null);
-    setForm((f) => ({ ...f, student_id: '' }));
-    setLookupErr('');
-    if (lookupTimer.current) clearTimeout(lookupTimer.current);
-    lookupTimer.current = setTimeout(() => lookupStudent(value), 450);
-  };
 
   useEffect(() => {
     academicService.classes.list().then((r) => setClasses(r.data.data || []));
@@ -178,27 +86,6 @@ export function ChallansPage() {
   };
   useEffect(() => { load(); }, [filters]);
 
-  const handleGenerate = async () => {
-    if (!form.student_id) {
-      setLookupErr('Enter admission number and wait for student to appear');
-      return;
-    }
-    if (feeData?.fee_preview && !feeData.fee_preview.can_generate) {
-      setLookupErr(feeData.fee_preview.message || 'Cannot generate challan for this month');
-      return;
-    }
-    try {
-      await financeService.challans.generate(form);
-      setMsg('Challan generated');
-      setModal(false);
-      load();
-    } catch (e) {
-      setErr(e.response?.data?.message || 'Generation failed');
-    }
-  };
-
-  const canGenerate = feeData?.fee_preview?.can_generate ?? false;
-
   const handleMarkPaid = async (id) => {
     setActionLoading(true);
     try {
@@ -207,6 +94,31 @@ export function ChallansPage() {
       load();
     } catch (e) {
       setErr(e.response?.data?.message || 'Failed to mark paid');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRecordPayment = async () => {
+    if (!payModal) return;
+    const amount = parseFloat(payAmount);
+    if (!amount || amount <= 0) {
+      setErr('Enter a valid payment amount');
+      return;
+    }
+    setActionLoading(true);
+    setErr('');
+    try {
+      await financeService.payments.create({
+        challan_id: payModal.id,
+        amount,
+        payment_method: payMethod,
+      });
+      setMsg(amount >= parseFloat(payModal.total_amount) - parseFloat(payModal.amount_paid || 0) ? 'Challan fully paid' : 'Partial payment recorded');
+      setPayModal(null);
+      load();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Payment failed');
     } finally {
       setActionLoading(false);
     }
@@ -243,16 +155,21 @@ export function ChallansPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Challans</h2>
-        <Button onClick={openGenerateModal}>Generate Challan</Button>
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">Challans</h2>
+          <p className="text-sm text-gray-500 mt-1">View and manage challans. Generate new challans from New Student Fee Setup.</p>
+        </div>
+        <Link to="/finance/new-student-fees">
+          <Button variant="secondary">New Student Fee Setup</Button>
+        </Link>
       </div>
       <Alert type="success" message={msg} onClose={() => setMsg('')} />
       <Alert type="error" message={err} onClose={() => setErr('')} />
       <Card>
         <div className="flex flex-wrap gap-4 mb-4">
           <Select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="!mb-0"
-            options={[{ value: '', label: 'All Status' }, { value: 'pending', label: 'Pending' }, { value: 'paid', label: 'Paid' }, { value: 'overdue', label: 'Overdue' }, { value: 'cancelled', label: 'Cancelled' }]} />
+            options={[{ value: '', label: 'All Status' }, { value: 'pending', label: 'Pending' }, { value: 'partial', label: 'Partial' }, { value: 'paid', label: 'Paid' }, { value: 'overdue', label: 'Overdue' }, { value: 'cancelled', label: 'Cancelled' }]} />
           <Input type="month" value={filters.month_year} onChange={(e) => setFilters({ ...filters, month_year: e.target.value })} className="!mb-0" />
           <Select value={filters.class_id} onChange={(e) => setFilters({ ...filters, class_id: e.target.value, section_id: '' })} className="!mb-0"
             options={[{ value: '', label: 'All Classes' }, ...classes.map((c) => ({ value: c.id, label: c.name }))]} />
@@ -273,6 +190,7 @@ export function ChallansPage() {
                 {r.status !== 'paid' && r.status !== 'cancelled' && (
                   <>
                     <Button variant="success" disabled={actionLoading} onClick={() => handleMarkPaid(r.id)}>Mark Paid</Button>
+                    <Button variant="secondary" disabled={actionLoading} onClick={() => { setPayModal(r); setPayAmount(String(Math.max(0, parseFloat(r.total_amount) - parseFloat(r.amount_paid || 0)))); setPayMethod('cash'); }}>Record Payment</Button>
                     <Button variant="secondary" disabled={actionLoading} onClick={() => handleRegenerate(r.id)}>Regenerate</Button>
                     <Button variant="danger" disabled={actionLoading} onClick={() => { setCancelModal(r); setCancelReason(''); }}>Cancel</Button>
                   </>
@@ -283,66 +201,19 @@ export function ChallansPage() {
           ]} data={challans} />
         )}
       </Card>
-      <Modal open={modal} onClose={() => setModal(false)} title="Generate Challan" size="lg">
-        <Input
-          label="Admission No"
-          value={admissionInput}
-          onChange={(e) => onAdmissionChange(e.target.value)}
-          onBlur={() => lookupStudent(admissionInput)}
-          onKeyDown={(e) => e.key === 'Enter' && lookupStudent(admissionInput)}
-          placeholder="e.g. ADM-2024-001 or roll no"
-          help="Type admission number — student details will load automatically"
-        />
-        {lookupLoading && (
-          <p className="text-sm text-violet-600 -mt-3 mb-4 flex items-center gap-2">
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
-            Searching student…
-          </p>
-        )}
-        {lookupErr && !lookupLoading && (
-          <p className="text-sm text-red-600 -mt-3 mb-4">{lookupErr}</p>
-        )}
-        {selectedStudent && !lookupLoading && (
-          <div className="mb-5 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-violet-600 mb-2">Student found</p>
-            <p className="text-lg font-bold text-gray-900">
-              {selectedStudent.first_name} {selectedStudent.last_name || ''}
+      <Modal open={!!payModal} onClose={() => setPayModal(null)} title="Record Payment">
+        {payModal && (
+          <>
+            <p className="text-sm text-gray-600 mb-4">
+              Challan <strong>{payModal.challan_no}</strong> · Total Rs. {payModal.total_amount}
+              {payModal.amount_paid > 0 && <> · Paid Rs. {payModal.amount_paid}</>}
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-600">
-              <span>Admission: <strong className="text-gray-900">{selectedStudent.admission_no || '—'}</strong></span>
-              <span>Roll: <strong className="text-gray-900">{selectedStudent.roll_no || '—'}</strong></span>
-              <span>Class: <strong className="text-gray-900">{selectedStudent.class_name || '—'}</strong></span>
-              <span>Section: <strong className="text-gray-900">{selectedStudent.section_name || '—'}</strong></span>
-            </div>
-          </div>
+            <Input label="Amount (Rs)" type="number" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} />
+            <Select label="Method" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}
+              options={[{ value: 'cash', label: 'Cash' }, { value: 'bank', label: 'Bank transfer' }, { value: 'online', label: 'Online' }]} />
+            <Button onClick={handleRecordPayment} className="w-full mt-4" disabled={actionLoading}>Save payment</Button>
+          </>
         )}
-        <Input
-          label="Month (YYYY-MM)"
-          type="month"
-          value={form.month_year || new Date().toISOString().slice(0, 7)}
-          onChange={(e) => setForm({ ...form, month_year: e.target.value })}
-        />
-
-        {selectedStudent && (
-          <div className="mt-4 border-t border-gray-100 pt-4">
-            <StudentFeeSummary
-              data={feeData}
-              loading={feeLoading}
-              showPreview
-              showTimeline
-              showPayments={false}
-              compact
-            />
-          </div>
-        )}
-
-        <Button
-          onClick={handleGenerate}
-          className="w-full mt-4"
-          disabled={!selectedStudent || lookupLoading || feeLoading || (feeData?.fee_preview && !canGenerate)}
-        >
-          {feeData?.fee_preview?.existing_challan ? 'Challan already exists' : 'Generate Challan'}
-        </Button>
       </Modal>
       <Modal open={!!cancelModal} onClose={() => setCancelModal(null)} title="Cancel Challan">
         <p className="text-sm text-gray-600 mb-4">

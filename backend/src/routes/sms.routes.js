@@ -5,7 +5,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 const institutionScopeMiddleware = require('../middleware/institutionScopeMiddleware');
 
 const router = express.Router();
-router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'finance_manager', 'principal']));
+router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'finance_manager', 'school_administrator']));
 
 router.get('/dashboard', ctrl.dashboard);
 router.get('/templates', ctrl.templates);

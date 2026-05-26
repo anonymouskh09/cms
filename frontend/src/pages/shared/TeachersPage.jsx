@@ -25,6 +25,8 @@ export default function TeachersPage() {
   const [classSubjects, setClassSubjects] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [modal, setModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({});
   const [assignModal, setAssignModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [assignments, setAssignments] = useState([]);
@@ -69,6 +71,41 @@ export default function TeachersPage() {
     setMsg('Teacher created');
     setModal(false);
     load();
+  };
+
+  const openEdit = (teacher) => {
+    setSelectedTeacher(teacher);
+    setEditForm({
+      name: teacher.name || '',
+      email: teacher.email || teacher.user_email || '',
+      phone: teacher.phone || '',
+      employee_no: teacher.employee_no || '',
+      qualification: teacher.qualification || '',
+      status: teacher.status || 'active',
+      password: '',
+    });
+    setEditModal(true);
+  };
+
+  const handleEditSave = async () => {
+    const payload = { ...editForm };
+    if (!payload.password) delete payload.password;
+    await teachersService.update(selectedTeacher.id, payload);
+    setMsg('Teacher updated');
+    setEditModal(false);
+    load();
+  };
+
+  const handleDelete = async (teacher) => {
+    if (!window.confirm(`Permanently delete teacher "${teacher.name}"? Assignments and login will be removed.`)) return;
+    try {
+      await teachersService.remove(teacher.id);
+      setMsg('Teacher deleted');
+      if (expandedId === teacher.id) setExpandedId(null);
+      load();
+    } catch (e) {
+      setMsg(e.response?.data?.message || 'Delete failed');
+    }
   };
 
   const openAssign = async (teacher) => {
@@ -154,6 +191,8 @@ export default function TeachersPage() {
                     <Button variant="secondary" onClick={() => toggleExpand(t.id)}>
                       {expanded ? 'Hide details' : 'View details'}
                     </Button>
+                    <Button variant="secondary" onClick={() => openEdit(t)}>Edit</Button>
+                    <Button variant="danger" onClick={() => handleDelete(t)}>Delete</Button>
                     <Button variant="secondary" onClick={() => openAssign(t)}>Assign Subjects</Button>
                   </div>
                 </div>
@@ -235,6 +274,18 @@ export default function TeachersPage() {
           })}
         </div>
       )}
+
+      <Modal open={editModal} onClose={() => setEditModal(false)} title={`Edit — ${selectedTeacher?.name || ''}`}>
+        <Input label="Name" value={editForm.name || ''} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+        <Input label="Email" value={editForm.email || ''} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+        <Input label="Phone" value={editForm.phone || ''} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+        <Input label="Employee No" value={editForm.employee_no || ''} onChange={(e) => setEditForm({ ...editForm, employee_no: e.target.value })} />
+        <Input label="Qualification" value={editForm.qualification || ''} onChange={(e) => setEditForm({ ...editForm, qualification: e.target.value })} />
+        <Input label="New Password (optional)" type="password" value={editForm.password || ''} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} />
+        <Select label="Status" value={editForm.status || 'active'} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+          options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
+        <Button onClick={handleEditSave} className="w-full mt-4">Save Changes</Button>
+      </Modal>
 
       <Modal open={modal} onClose={() => setModal(false)} title="Add Teacher">
         <Input label="Name" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />

@@ -12,8 +12,8 @@ router.use(authMiddleware, institutionScopeMiddleware);
 
 router.get('/student/me/results', roleMiddleware(['student']), ctrl.getStudentPublishedResults);
 router.get('/student/me', roleMiddleware(['student']), ctrl.getStudentMe);
-router.get('/parent/child/:studentId/results', roleMiddleware(['parent', 'owner', 'principal', 'admin']), ctrl.getParentChildPublishedResults);
-router.get('/parent/child/:studentId', roleMiddleware(['parent', 'owner', 'principal', 'admin']), ctrl.getParentChild);
+router.get('/parent/child/:studentId/results', roleMiddleware(['parent', 'owner', 'school_administrator', 'admin']), ctrl.getParentChildPublishedResults);
+router.get('/parent/child/:studentId', roleMiddleware(['parent', 'owner', 'school_administrator', 'admin']), ctrl.getParentChild);
 router.get('/class', view, ctrl.listClass);
 
 router.get('/student/:studentId/exam/:examId', view, ctrl.getStudentExam);

@@ -57,7 +57,7 @@ export default function FinanceStaffPage() {
         <div>
           <h2 className="text-2xl font-bold">Finance Login Accounts</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Finance staff ke liye alag login — fees, challans, payments, defaulters.
+            Separate login for finance staff — fees, challans, payments, and defaulters.
             Demo: <strong>finance@peers.local</strong> / password123
           </p>
         </div>
@@ -68,8 +68,8 @@ export default function FinanceStaffPage() {
 
       <Card className="mb-6 bg-emerald-50 border-emerald-100">
         <p className="text-sm text-emerald-900">
-          Finance user login karke <strong>/finance/dashboard</strong> par jata hai —
-          fee structures, challan generate, payments, defaulters report.
+          After login, finance users are taken to <strong>/finance/dashboard</strong> —
+          fee structures, challan generation, payments, and defaulter reports.
         </p>
       </Card>
 

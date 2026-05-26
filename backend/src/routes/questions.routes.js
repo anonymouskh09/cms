@@ -5,7 +5,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 const institutionScopeMiddleware = require('../middleware/institutionScopeMiddleware');
 
 const router = express.Router();
-router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'principal', 'admin', 'teacher']));
+router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'school_administrator', 'admin', 'teacher']));
 
 router.get('/filters/options', ctrl.filterOptions);
 router.post('/generate-ai', ctrl.generateAi);

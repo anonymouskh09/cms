@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { OwnerFilterContext } from '../../context/OwnerFilterContext';
 import { getMenuForRole, isMenuItemActive } from '../../utils/menus';
 import { getMenuIcon } from '../dashboard/menuIcons';
+import { institutionsService } from '../../services/authService';
 
 export default function DashboardLayout({ children, institutionFilter, onInstitutionFilterChange }) {
   const { user, logout } = useAuth();
@@ -10,7 +12,19 @@ export default function DashboardLayout({ children, institutionFilter, onInstitu
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [ownerInstitutionId, setOwnerInstitutionId] = useState(null);
+  const [institutions, setInstitutions] = useState([]);
   const menu = getMenuForRole(user?.role);
+
+  const isOwner = user?.role === 'owner';
+  const effectiveInstitutionId = institutionFilter !== undefined ? institutionFilter : ownerInstitutionId;
+  const setEffectiveInstitutionId = onInstitutionFilterChange || setOwnerInstitutionId;
+
+  useEffect(() => {
+    if (isOwner) {
+      institutionsService.list().then((r) => setInstitutions(r.data.data || [])).catch(() => {});
+    }
+  }, [isOwner]);
 
   const handleLogout = () => {
     logout();
@@ -19,7 +33,7 @@ export default function DashboardLayout({ children, institutionFilter, onInstitu
 
   const roleLabel = user?.role?.replace(/_/g, ' ') || 'User';
 
-  return (
+  const layout = (
     <div className="min-h-screen bg-[#f4f3f8] flex">
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -49,6 +63,9 @@ export default function DashboardLayout({ children, institutionFilter, onInstitu
             <p className="text-xs text-violet-200/90 uppercase tracking-wide">Signed in as</p>
             <p className="font-semibold text-sm mt-0.5 truncate">{user?.name}</p>
             <p className="text-xs text-violet-200/80 capitalize mt-1">{roleLabel}</p>
+            {isOwner && (
+              <p className="text-xs text-amber-200/90 mt-2 font-medium">View only</p>
+            )}
           </div>
         )}
 
@@ -102,15 +119,16 @@ export default function DashboardLayout({ children, institutionFilter, onInstitu
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            {user?.role === 'owner' && onInstitutionFilterChange && (
+            {isOwner && (
               <select
-                value={institutionFilter || ''}
-                onChange={(e) => onInstitutionFilterChange(e.target.value || null)}
-                className="px-4 py-2 border border-gray-200 rounded-xl text-sm bg-white shadow-sm focus:ring-2 focus:ring-violet-500/30 outline-none"
+                value={effectiveInstitutionId || ''}
+                onChange={(e) => setEffectiveInstitutionId(e.target.value || null)}
+                className="px-4 py-2 border border-gray-200 rounded-xl text-sm bg-white shadow-sm focus:ring-2 focus:ring-violet-500/30 outline-none max-w-xs"
               >
-                <option value="">All Institutions</option>
-                <option value="1">Schools</option>
-                <option value="2">Primal Academy</option>
+                <option value="">All institutions</option>
+                {institutions.map((inst) => (
+                  <option key={inst.id} value={String(inst.id)}>{inst.name}</option>
+                ))}
               </select>
             )}
           </div>
@@ -132,4 +150,19 @@ export default function DashboardLayout({ children, institutionFilter, onInstitu
       </div>
     </div>
   );
+
+  if (isOwner) {
+    return (
+      <OwnerFilterContext.Provider
+        value={{
+          institutionId: effectiveInstitutionId,
+          setInstitutionId: setEffectiveInstitutionId,
+        }}
+      >
+        {layout}
+      </OwnerFilterContext.Provider>
+    );
+  }
+
+  return layout;
 }

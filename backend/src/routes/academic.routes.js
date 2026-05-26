@@ -7,9 +7,10 @@ const institutionScopeMiddleware = require('../middleware/institutionScopeMiddle
 function makeRouter(ctrl) {
   const router = express.Router();
   router.use(authMiddleware, institutionScopeMiddleware);
-  router.get('/', roleMiddleware(['owner', 'principal', 'admin', 'teacher']), ctrl.list);
-  router.post('/', roleMiddleware(['owner', 'principal', 'admin']), ctrl.create);
-  router.put('/:id', roleMiddleware(['owner', 'principal', 'admin']), ctrl.update);
+  router.get('/', roleMiddleware(['owner', 'school_administrator', 'admin', 'principal', 'teacher']), ctrl.list);
+  router.post('/', roleMiddleware(['owner', 'school_administrator', 'admin']), ctrl.create);
+  router.put('/:id', roleMiddleware(['owner', 'school_administrator', 'admin']), ctrl.update);
+  router.delete('/:id', roleMiddleware(['owner', 'school_administrator', 'admin']), ctrl.remove);
   return router;
 }
 

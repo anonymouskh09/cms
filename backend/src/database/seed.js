@@ -16,10 +16,12 @@ async function seed() {
 
   const users = [
     [null, 'Super Admin', 'owner@cms.local', '03000000000', 'owner', ownerHash],
-    [1, 'Schools Principal', 'principal@peers.local', '03001111111', 'principal', defaultHash],
+    [1, 'Schools Administrator', 'principal@peers.local', '03001111111', 'school_administrator', defaultHash],
+    [1, 'Schools Principal', 'principal.portal@peers.local', '03001111110', 'principal', defaultHash],
     [1, 'Schools Admin', 'admin@peers.local', '03001111112', 'admin', defaultHash],
     [1, 'Schools Finance', 'finance@peers.local', '03001111113', 'finance_manager', defaultHash],
-    [2, 'Primal Principal', 'principal@primal.local', '03002222221', 'principal', defaultHash],
+    [2, 'Primal School Administrator', 'principal@primal.local', '03002222221', 'school_administrator', defaultHash],
+    [2, 'Primal Principal', 'principal.portal@primal.local', '03002222220', 'principal', defaultHash],
     [2, 'Primal Admin', 'admin@primal.local', '03002222222', 'admin', defaultHash],
     [2, 'Primal Finance', 'finance@primal.local', '03002222223', 'finance_manager', defaultHash],
   ];
@@ -152,7 +154,8 @@ async function seed() {
   console.log('Seed complete.');
   console.log('Login credentials:');
   console.log('  Owner: owner@cms.local / owner123');
-  console.log('  Principal (Schools): principal@peers.local / password123');
+  console.log('  School Administrator (Schools): principal@peers.local / password123');
+  console.log('  Principal Portal (Schools): principal.portal@peers.local / password123');
   console.log('  Student: student@peers.local / password123');
   console.log('  Parent: parent@peers.local / password123');
   process.exit(0);

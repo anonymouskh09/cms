@@ -15,7 +15,7 @@ function roleBase(role) {
 
 export default function AttendanceCorrectionRequestsPage() {
   const { user } = useAuth();
-  const canReview = ['owner', 'principal', 'admin'].includes(user.role);
+  const canReview = ['owner', 'school_administrator', 'admin', 'principal'].includes(user.role);
   const [requests, setRequests] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [modal, setModal] = useState(null);

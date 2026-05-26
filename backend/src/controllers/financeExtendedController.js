@@ -1,7 +1,9 @@
 const pool = require('../config/db');
 const { buildInstitutionWhere } = require('../middleware/institutionScopeMiddleware');
 const { logAudit } = require('../utils/auditLog');
-const { syncOverdueChallans, createChallanForStudent } = require('../utils/financeHelpers');
+const { syncOverdueChallans, createChallanForStudent, getNextMonthYear } = require('../utils/financeHelpers');
+const { fetchActiveStudent } = require('../utils/resolveActiveStudent');
+const { studentHasActiveProfile } = require('../utils/studentFeeProfileHelpers');
 
 async function bulkGenerate(req, res, next) {
   try {
@@ -22,6 +24,12 @@ async function bulkGenerate(req, res, next) {
     const failed = [];
 
     for (const stu of students) {
+      const hasProfile = await studentHasActiveProfile(stu.id);
+      const [legacyProfile] = await pool.query('SELECT id FROM student_fee_profiles WHERE student_id = ?', [stu.id]);
+      if (legacyProfile.length && !hasProfile) {
+        failed.push({ student_id: stu.id, message: 'Fee setup pending — complete New Student Fee Setup' });
+        continue;
+      }
       const result = await createChallanForStudent(stu.id, month_year);
       if (result.data) generated.push(result.data);
       else if (result.skipped) skipped.push({ student_id: stu.id, message: result.error });
@@ -43,6 +51,67 @@ async function bulkGenerate(req, res, next) {
       data: { generated, skipped, failed, total: students.length },
       message: `Generated ${generated.length} of ${students.length} challans`,
     });
+  } catch (err) { next(err); }
+}
+
+async function bulkGenerateActiveProfiles(req, res, next) {
+  try {
+    const { due_date } = req.body;
+    if (!due_date) {
+      return res.status(400).json({ success: false, message: 'Due date is required' });
+    }
+    const monthYear = req.body.month_year || getNextMonthYear();
+    const instId = req.user.role === 'owner' ? (req.body.institution_id || req.institutionFilter) : req.user.institution_id;
+    if (!instId) return res.status(400).json({ success: false, message: 'institution_id required' });
+
+    const [students] = await pool.query(
+      `SELECT s.id, s.first_name, s.last_name, s.admission_no
+       FROM students s
+       INNER JOIN student_fee_profiles p ON p.student_id = s.id AND p.status = 'active'
+       WHERE s.institution_id = ? AND s.status = 'active'`,
+      [instId]
+    );
+
+    const generated = [];
+    const skipped = [];
+    const failed = [];
+
+    for (const stu of students) {
+      const result = await createChallanForStudent(stu.id, monthYear, null, { dueDate: due_date });
+      if (result.data) generated.push({ ...result.data, student_name: `${stu.first_name} ${stu.last_name || ''}`.trim() });
+      else if (result.skipped) skipped.push({ student_id: stu.id, name: stu.admission_no, message: result.error });
+      else failed.push({ student_id: stu.id, name: stu.admission_no, message: result.error });
+    }
+
+    await pool.query(
+      `INSERT INTO challan_generation_logs (institution_id, generation_type, month_year, class_id, generated_by, challans_count, filters_json, notes)
+       VALUES (?, ?, ?, NULL, ?, ?, ?, ?)`,
+      [
+        instId, 'active_profiles_monthly', monthYear, req.user.user_id, generated.length,
+        JSON.stringify({ due_date, skipped: skipped.length, failed: failed.length }),
+        `Next month challans for ${generated.length} students with active fee setup`,
+      ]
+    );
+
+    await logAudit({ institutionId: instId, userId: req.user.user_id, action: 'challans_bulk_active_profiles', module: 'challans', req });
+    res.status(201).json({
+      success: true,
+      data: { month_year: monthYear, due_date, generated, skipped, failed, total: students.length },
+      message: `Generated ${generated.length} challan(s) for ${monthYear}`,
+    });
+  } catch (err) { next(err); }
+}
+
+async function countActiveProfiles(req, res, next) {
+  try {
+    const instId = req.user.role === 'owner' ? req.institutionFilter : req.user.institution_id;
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) AS count FROM student_fee_profiles p
+       JOIN students s ON s.id = p.student_id
+       WHERE p.status = 'active' AND s.status = 'active'${instId ? ' AND p.institution_id = ?' : ''}`,
+      instId ? [instId] : []
+    );
+    res.json({ success: true, data: { count: rows[0].count } });
   } catch (err) { next(err); }
 }
 
@@ -145,14 +214,14 @@ function parseFeeBreakdown(raw) {
 function buildFeeSummary(challans) {
   const active = challans.filter((c) => c.status !== 'cancelled');
   const paid = active.filter((c) => c.status === 'paid');
-  const outstanding = active.filter((c) => ['pending', 'overdue'].includes(c.status));
+  const outstanding = active.filter((c) => ['pending', 'partial', 'overdue'].includes(c.status));
   const sum = (rows, field = 'total_amount') => rows.reduce((s, r) => s + parseFloat(r[field] || 0), 0);
 
   return {
     total_paid: sum(paid),
     total_outstanding: sum(outstanding),
     count_paid: paid.length,
-    count_pending: active.filter((c) => c.status === 'pending').length,
+    count_pending: active.filter((c) => c.status === 'pending' || c.status === 'partial').length,
     count_overdue: active.filter((c) => c.status === 'overdue').length,
     count_challans: active.length,
   };
@@ -200,7 +269,8 @@ async function studentPayments(req, res, next) {
 
     let fee_preview = null;
     if (monthYear && studentBundle) {
-      const { breakdown, baseAmount } = await computeFeeBreakdown(studentBundle, studentId);
+      const feeResult = await computeFeeBreakdown(studentBundle, studentId);
+      const { breakdown, baseAmount, error: feeError, isFirstChallan, profile } = feeResult;
       const dueDate = computeDueDate(monthYear, studentBundle.fee_due_day);
       const fineAmount = computeFineAmount(dueDate, studentBundle.fine_per_day);
       const existing = challans.find((c) => c.month_year === monthYear && c.status !== 'cancelled');
@@ -212,6 +282,8 @@ async function studentPayments(req, res, next) {
         total_amount: baseAmount + fineAmount,
         due_date: dueDate,
         has_fee_structure: breakdown.length > 0,
+        fee_profile_status: profile?.status || null,
+        is_first_challan: isFirstChallan,
         existing_challan: existing
           ? {
               id: existing.id,
@@ -220,12 +292,16 @@ async function studentPayments(req, res, next) {
               total_amount: parseFloat(existing.total_amount || 0),
             }
           : null,
-        can_generate: !existing && baseAmount > 0,
-        message: !breakdown.length
-          ? 'No fee structure set for this student\'s class — add fee in Fee Structures first'
-          : existing
-            ? `Challan already exists for ${monthYear} (${existing.status})`
-            : null,
+        can_generate: !existing && baseAmount > 0 && feeError !== 'pending_profile',
+        message: feeError === 'pending_profile'
+          ? 'Fee setup pending — complete New Student Fee Setup first'
+          : !breakdown.length
+            ? (profile
+              ? 'No monthly fees for this month (one-time fees apply on first challan only)'
+              : 'No fee structure — complete New Student Fee Setup or class fee structures')
+            : existing
+              ? `Challan already exists for ${monthYear} (${existing.status})`
+              : null,
       };
     }
 
@@ -245,12 +321,9 @@ async function studentPayments(req, res, next) {
 
 async function studentPaymentsMe(req, res, next) {
   try {
-    const [students] = await pool.query(
-      "SELECT id FROM students WHERE user_id = ? AND status = 'active'",
-      [req.user.user_id]
-    );
-    if (!students.length) return res.status(404).json({ success: false, message: 'Student profile not found' });
-    req.params.studentId = String(students[0].id);
+    const student = await fetchActiveStudent(pool, req.user.user_id, { select: 's.id' });
+    if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
+    req.params.studentId = String(student.id);
     return studentPayments(req, res, next);
   } catch (err) { next(err); }
 }
@@ -270,10 +343,17 @@ async function createPayment(req, res, next) {
       return res.status(400).json({ success: false, message: 'Challan is cancelled' });
     }
 
-    const payAmount = amount != null ? parseFloat(amount) : parseFloat(challan.total_amount);
+    const total = parseFloat(challan.total_amount);
+    const alreadyPaid = parseFloat(challan.amount_paid || 0);
+    const payAmount = amount != null ? parseFloat(amount) : total - alreadyPaid;
+    if (payAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Payment amount must be greater than zero' });
+    }
+    const newPaid = Math.min(total, alreadyPaid + payAmount);
+    const newStatus = newPaid >= total ? 'paid' : 'partial';
     await pool.query(
-      `UPDATE challans SET status = 'paid', paid_at = NOW(), payment_method = ? WHERE id = ?`,
-      [payment_method || 'cash', challan_id]
+      `UPDATE challans SET status = ?, paid_at = IF(? = 'paid', NOW(), paid_at), payment_method = ?, amount_paid = ? WHERE id = ?`,
+      [newStatus, newStatus, payment_method || 'cash', newPaid, challan_id]
     );
     const [result] = await pool.query(
       `INSERT INTO payments (institution_id, challan_id, amount, payment_method, received_by, notes) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -345,6 +425,8 @@ async function defaultersReport(req, res, next) {
 
 module.exports = {
   bulkGenerate,
+  bulkGenerateActiveProfiles,
+  countActiveProfiles,
   generationLogs,
   regenerateChallan,
   cancelChallan,

@@ -6,7 +6,7 @@ const institutionScopeMiddleware = require('../middleware/institutionScopeMiddle
 const { syllabusUpload } = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
-router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'principal', 'admin', 'teacher']));
+router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['owner', 'school_administrator', 'admin', 'teacher']));
 
 router.get('/', ctrl.list);
 router.post('/upload', syllabusUpload.single('file'), ctrl.upload);

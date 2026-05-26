@@ -12,7 +12,7 @@ router.get('/', ctrl.list);
 router.get('/:id', ctrl.getById);
 router.post('/', roleMiddleware(ctrl.MANAGE_ROLES), announcementUpload.single('attachment'), ctrl.create);
 router.put('/:id', roleMiddleware(ctrl.MANAGE_ROLES), announcementUpload.single('attachment'), ctrl.update);
-router.delete('/:id', roleMiddleware(['owner', 'principal', 'admin']), ctrl.remove);
+router.delete('/:id', roleMiddleware(['owner', 'school_administrator', 'admin']), ctrl.remove);
 router.post('/:id/pin', roleMiddleware(ctrl.MANAGE_ROLES), ctrl.pin);
 router.post('/:id/unpin', roleMiddleware(ctrl.MANAGE_ROLES), ctrl.unpin);
 router.post('/:id/read', ctrl.markRead);

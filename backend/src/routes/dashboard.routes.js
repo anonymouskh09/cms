@@ -8,7 +8,8 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.get('/owner', roleMiddleware(['owner']), institutionScopeMiddleware, ctrl.ownerDashboard);
-router.get('/principal', roleMiddleware(['principal', 'admin']), ctrl.principalDashboard);
+router.get('/principal', roleMiddleware(['school_administrator', 'admin']), institutionScopeMiddleware, ctrl.principalDashboard);
+router.get('/principal-portal', roleMiddleware(['principal']), institutionScopeMiddleware, ctrl.principalPortalDashboard);
 router.get('/finance', roleMiddleware(['finance_manager', 'owner']), ctrl.financeDashboard);
 router.get('/student', roleMiddleware(['student']), ctrl.studentDashboard);
 router.get('/parent', roleMiddleware(['parent']), ctrl.parentDashboard);

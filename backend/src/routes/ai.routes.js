@@ -6,8 +6,8 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 const institutionScopeMiddleware = require('../middleware/institutionScopeMiddleware');
 
 const router = express.Router();
-const manage = roleMiddleware(['owner', 'principal', 'admin', 'teacher']);
-const adminManage = roleMiddleware(['owner', 'principal', 'admin']);
+const manage = roleMiddleware(['owner', 'school_administrator', 'admin', 'teacher']);
+const adminManage = roleMiddleware(['owner', 'school_administrator', 'admin']);
 
 router.use(authMiddleware, institutionScopeMiddleware, manage);
 

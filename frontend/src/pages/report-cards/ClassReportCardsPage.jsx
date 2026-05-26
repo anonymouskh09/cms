@@ -15,7 +15,7 @@ function roleBase(role) {
 
 export default function ClassReportCardsPage() {
   const { user } = useAuth();
-  const canGenerate = ['owner', 'principal', 'admin'].includes(user.role);
+  const canGenerate = ['owner', 'school_administrator', 'admin'].includes(user.role);
   const [exams, setExams] = useState([]);
   const [classes, setClasses] = useState([]);
   const [sections, setSections] = useState([]);

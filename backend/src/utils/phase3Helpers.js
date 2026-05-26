@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 
-const MANAGE_ROLES = ['owner', 'principal', 'admin'];
-const SYLLABUS_ROLES = ['owner', 'principal', 'admin', 'teacher'];
+const MANAGE_ROLES = ['owner', 'school_administrator', 'admin'];
+const SYLLABUS_ROLES = ['owner', 'school_administrator', 'admin', 'teacher'];
 
 function canManage(req) {
   return MANAGE_ROLES.includes(req.user.role);

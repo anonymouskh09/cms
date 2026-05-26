@@ -12,7 +12,7 @@ export default function AnnouncementDetailsPage() {
   const { user } = useAuth();
   const base = useAnnouncementBase();
   const navigate = useNavigate();
-  const canManage = ['owner', 'principal', 'admin', 'teacher'].includes(user?.role);
+  const canManage = ['owner', 'school_administrator', 'admin', 'principal', 'teacher'].includes(user?.role);
   const [item, setItem] = useState(null);
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
@@ -95,7 +95,7 @@ export default function AnnouncementDetailsPage() {
                 <Button variant="secondary" onClick={() => handlePin(!item.is_pinned)}>
                   {item.is_pinned ? 'Unpin' : 'Pin'}
                 </Button>
-                {['owner', 'principal', 'admin'].includes(user?.role) && (
+                {['owner', 'school_administrator', 'admin', 'principal'].includes(user?.role) && (
                   <Button variant="danger" onClick={handleDelete}>Delete</Button>
                 )}
               </>

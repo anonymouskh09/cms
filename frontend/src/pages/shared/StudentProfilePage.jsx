@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Card, Badge, Spinner, StatCard, Table, Button, Input, Select, Textarea, Modal, Alert } from '../../components/ui';
 import { studentsService, academicService } from '../../services/authService';
 
 export default function StudentProfilePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const basePath = user?.role === 'admin' ? '/admin' : user?.role === 'owner' ? '/owner' : '/principal';
   const [data, setData] = useState(null);
   const [classes, setClasses] = useState([]);
   const [sections, setSections] = useState([]);
@@ -86,9 +90,26 @@ export default function StudentProfilePage() {
 
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-6 gap-3 flex-wrap">
         <h2 className="text-2xl font-bold">{data.first_name} {data.last_name}</h2>
-        <Button onClick={openEdit}>Edit Student</Button>
+        <div className="flex gap-2">
+          <Button onClick={openEdit}>Edit Student</Button>
+          <Button
+            variant="danger"
+            onClick={async () => {
+              const name = `${data.first_name} ${data.last_name || ''}`.trim();
+              if (!window.confirm(`Permanently delete "${name}"? This cannot be undone.`)) return;
+              try {
+                await studentsService.remove(id);
+                navigate(`${basePath}/students`);
+              } catch (e) {
+                setErr(e.response?.data?.message || 'Delete failed');
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </div>
       </div>
       <Alert type="success" message={msg} onClose={() => setMsg('')} />
       <div className="grid lg:grid-cols-3 gap-6 mb-6">

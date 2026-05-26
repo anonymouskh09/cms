@@ -3,8 +3,9 @@ const path = require('path');
 const pool = require('../config/db');
 const { generateReportCardPdf, calcGrade } = require('../utils/reportCardPdfGenerator');
 
-const MANAGE_ROLES = ['owner', 'principal', 'admin'];
-const VIEW_ROLES = [...MANAGE_ROLES, 'teacher', 'student', 'parent'];
+const { FULL_ACCESS_ROLES, PRINCIPAL_ROLE } = require('../constants/roles');
+const MANAGE_ROLES = FULL_ACCESS_ROLES;
+const VIEW_ROLES = [...MANAGE_ROLES, PRINCIPAL_ROLE, 'teacher', 'student', 'parent'];
 
 function canManage(req) {
   return MANAGE_ROLES.includes(req.user.role);

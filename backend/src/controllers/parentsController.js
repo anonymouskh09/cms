@@ -76,4 +76,89 @@ async function getChildren(req, res, next) {
   }
 }
 
-module.exports = { list, create, linkStudent, getChildren };
+async function update(req, res, next) {
+  try {
+    const [existing] = await pool.query('SELECT user_id, institution_id FROM parents WHERE id = ?', [req.params.id]);
+    if (!existing.length) return res.status(404).json({ success: false, message: 'Parent not found' });
+    if (req.institutionFilter && existing[0].institution_id !== req.institutionFilter) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    const fields = ['name', 'phone', 'email', 'address', 'status'];
+    const updates = [];
+    const params = [];
+    fields.forEach((f) => {
+      if (req.body[f] !== undefined) {
+        updates.push(`${f} = ?`);
+        params.push(req.body[f]);
+      }
+    });
+    if (updates.length) {
+      params.push(req.params.id);
+      await pool.query(`UPDATE parents SET ${updates.join(', ')} WHERE id = ?`, params);
+    }
+    const userId = existing[0].user_id;
+    if (userId) {
+      const userUpdates = [];
+      const userParams = [];
+      if (req.body.email !== undefined) {
+        userUpdates.push('email = ?');
+        userParams.push(req.body.email);
+      }
+      if (req.body.password) {
+        const hash = await bcrypt.hash(req.body.password, 10);
+        userUpdates.push('password_hash = ?');
+        userParams.push(hash);
+      }
+      if (req.body.name !== undefined) {
+        userUpdates.push('name = ?');
+        userParams.push(req.body.name);
+      }
+      if (req.body.status !== undefined) {
+        userUpdates.push('status = ?');
+        userParams.push(req.body.status === 'active' ? 'active' : 'disabled');
+      }
+      if (userUpdates.length) {
+        userParams.push(userId);
+        await pool.query(`UPDATE users SET ${userUpdates.join(', ')} WHERE id = ?`, userParams);
+      }
+    }
+    const [rows] = await pool.query(
+      `SELECT p.*, u.email AS user_email FROM parents p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = ?`,
+      [req.params.id]
+    );
+    res.json({ success: true, data: rows[0], message: 'Parent updated' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function remove(req, res, next) {
+  const conn = await pool.getConnection();
+  try {
+    const [existing] = await conn.query('SELECT user_id, institution_id FROM parents WHERE id = ?', [req.params.id]);
+    if (!existing.length) return res.status(404).json({ success: false, message: 'Parent not found' });
+    if (req.institutionFilter && existing[0].institution_id !== req.institutionFilter) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    const userId = existing[0].user_id;
+    await conn.beginTransaction();
+    await conn.query('DELETE FROM parent_student_links WHERE parent_user_id = ?', [userId]);
+    await conn.query('UPDATE students SET parent_id = NULL WHERE parent_id = ?', [req.params.id]);
+    await conn.query('DELETE FROM parents WHERE id = ?', [req.params.id]);
+    if (userId) {
+      await conn.query('DELETE FROM users WHERE id = ?', [userId]);
+    }
+    await conn.commit();
+    res.json({ success: true, message: 'Parent deleted permanently' });
+  } catch (err) {
+    await conn.rollback();
+    if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.errno === 1451) {
+      return res.status(400).json({ success: false, message: 'Cannot delete parent: linked records must be cleared first.' });
+    }
+    next(err);
+  } finally {
+    conn.release();
+  }
+}
+
+module.exports = { list, create, update, remove, linkStudent, getChildren };

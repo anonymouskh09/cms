@@ -7,6 +7,6 @@ const institutionScopeMiddleware = require('../middleware/institutionScopeMiddle
 const router = express.Router();
 router.use(authMiddleware);
 router.get('/', institutionScopeMiddleware, ctrl.list);
-router.get('/:id', roleMiddleware(['owner', 'principal', 'admin']), ctrl.getById);
+router.get('/:id', roleMiddleware(['owner', 'school_administrator', 'admin']), ctrl.getById);
 router.put('/:id', roleMiddleware(['owner']), ctrl.update);
 module.exports = router;

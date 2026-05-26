@@ -11,7 +11,7 @@ export default function AnnouncementsPage() {
   const [form, setForm] = useState({ audience: 'all' });
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
-  const canCreate = ['owner', 'principal', 'admin', 'teacher'].includes(user?.role);
+  const canCreate = ['owner', 'school_administrator', 'admin', 'principal', 'teacher'].includes(user?.role);
 
   const load = () => announcementsService.list().then((res) => setItems(res.data.data)).finally(() => setLoading(false));
   useEffect(() => { load(); }, []);

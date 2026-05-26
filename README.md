@@ -46,7 +46,8 @@ App runs at `http://localhost:5173`
 | Role | Email | Password |
 |------|-------|----------|
 | Owner | owner@cms.local | owner123 |
-| Principal (Peers) | principal@peers.local | password123 |
+| School Administrator (Peers) | principal@peers.local | password123 |
+| Principal Portal (Peers) | principal.portal@peers.local | password123 |
 | Admin (Peers) | admin@peers.local | password123 |
 | Finance (Peers) | finance@peers.local | password123 |
 | Teacher | teacher@peers.local | password123 |

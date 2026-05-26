@@ -80,11 +80,16 @@
       "dashboardRoute": "/owner/dashboard",
       "defaultPassword": "owner123"
     },
-    "principal": {
-      "description": "School head — full school management for one institution",
+    "school_administrator": {
+      "description": "Former principal portal — full school management at /principal/*",
       "dashboardRoute": "/principal/dashboard",
       "defaultPassword": "password123",
       "primarySetupRole": true
+    },
+    "principal": {
+      "description": "Principal — monitoring, approvals, communication at /principal-portal/*",
+      "dashboardRoute": "/principal-portal/dashboard",
+      "defaultPassword": "password123"
     },
     "admin": {
       "description": "Same as principal (school admin)",

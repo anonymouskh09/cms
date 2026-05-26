@@ -5,7 +5,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 const institutionScopeMiddleware = require('../middleware/institutionScopeMiddleware');
 
 const router = express.Router();
-router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['parent', 'teacher', 'owner', 'principal', 'admin']));
+router.use(authMiddleware, institutionScopeMiddleware, roleMiddleware(['parent', 'teacher', 'owner', 'school_administrator', 'admin']));
 
 router.get('/teachers', roleMiddleware(['parent', 'owner']), ctrl.listTeachersForStudent);
 router.get('/thread/:userId', ctrl.getThread);
